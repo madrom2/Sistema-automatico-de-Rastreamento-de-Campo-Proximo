@@ -37,5 +37,5 @@ Após terminar os recursos essênciais:
 - [ ] Organização e comentários no código
 
 Possiveis recursos adicionais:
-- **Adicionar eixo Z a medição**
-- **Tabela alterar de cor dependendo da intensidade de campo**
+- Adicionar eixo Z a medição
+- Tabela alterar de cor dependendo da intensidade de campo
