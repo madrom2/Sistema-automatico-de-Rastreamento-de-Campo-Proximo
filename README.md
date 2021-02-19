@@ -37,6 +37,6 @@ Após terminar os recursos essênciais:
 - [ ] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
 
-Possiveis recursos adicionais:
+Possíveis recursos adicionais:
 - Adicionar eixo Z a medição
 - Tabela alterar de cor dependendo da intensidade de campo
