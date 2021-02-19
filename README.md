@@ -21,7 +21,7 @@ Com as seguintes bibliotecas:
 #### Lista de controle 
 Recursos essênciais:
 - [x] Comunicação serial com GRBL1.1
-- [x] Comunicação analisador de espectro HAMEG HMS-X
+- [ ] Comunicação analisador de espectro HAMEG HMS-X
 - [x] Geração e atualização da matriz
 - [ ] Definição e comunição da frequência de medição
 - [ ] Comando do botão de "Parar Medição"
