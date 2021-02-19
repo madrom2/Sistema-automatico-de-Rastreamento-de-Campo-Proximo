@@ -5,6 +5,7 @@ Repositório de backup dos **modelos 3d desenvolvidos** e do código em **python
 A estrutura de atuação desenvolvida no software "fusion360", para levantamento de componentes e visualização do produto final.
 ![N|Solid](https://i.imgur.com/UW5lxAu.png)
 Para lista de componentes clique [AQUI]() . ADICIONADO FUTURAMENTE
+
 O controle de atuação será feito com [CNC Shield V3 para Arduino Uno](https://www.filipeflop.com/produto/cnc-shield-v3-para-arduino-impressora-3d/) com [Grbl1.1](https://github.com/grbl/grbl).
 ****
 #### Código
