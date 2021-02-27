@@ -24,7 +24,8 @@ Recursos essênciais:
 - [ ] Comunicação analisador de espectro HAMEG HMS-X
 - [x] Geração e atualização da matriz
 - [ ] Definição e comunição da frequência de medição
-- [ ] Comando do botão de "Parar Medição"
+- [x] Comando do botão de "Parar Medição"
+- [ ] Comando do botão de "Pausar Medição"
 - [x] Espaço de apresentação de parametros
 - [x] Comando do botão de "Inicia Medição"
 - [x] Movimento dos eixos X Y Z separadamente
@@ -32,10 +33,12 @@ Recursos essênciais:
 - [ ] Tempo estimado da medição
 - [x] Barra de progresso da medição
 - [ ] Botão e comando para "Home"
+- [ ] Escolha de ponto para remedir
 
 Após terminar os recursos essênciais:
 - [ ] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
+- [ ] Interação com código de plotagem
 
 Possíveis recursos adicionais:
 - Adicionar eixo Z a medição
