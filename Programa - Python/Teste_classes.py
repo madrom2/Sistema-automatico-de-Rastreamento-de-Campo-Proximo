@@ -1,6 +1,11 @@
 from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
+from PIL import Image, ImageTk
+
+from plotagem import plot_2d
+
+import csv
 
 from cnc_controle import controle_cnc
 
@@ -59,11 +64,11 @@ class main_window(Frame):
 
         notebook = Notebook(self)
         notebook.pack(fill=BOTH, expand=True)
-       
+        
         frm_ctrls = Frame(notebook)
         frm_ctrls.pack(fill=BOTH, expand=True)
                 
-        notebook.add(frm_ctrls, text='Controle')   
+        notebook.add(frm_ctrls, text='Controle')
         
         frm_ctrls.columnconfigure(0, pad=3)
         frm_ctrls.columnconfigure(1, pad=3)
@@ -147,7 +152,7 @@ class main_window(Frame):
         self.txt_log.grid(row=5, column=0, columnspan=5, rowspan=2)
         
         lbl_07 = Label(frm_ctrls, text='Comando:', width=8)
-        lbl_07.grid(row=7, column=0) #columnspan=1)
+        lbl_07.grid(row=7, column=0)
         
         self.ent_cmd = Entry(frm_ctrls, width=25)
         self.ent_cmd.grid(row=7, column=1, columnspan=3)        
@@ -158,6 +163,34 @@ class main_window(Frame):
         self.btn_send_cmd['command'] = self.envia_cmd_cnc
         
         self.lista_serial()
+        
+        #------------------
+        self.frm_teste = Frame(notebook)
+        self.frm_teste.pack(fill=BOTH, expand=True)
+                
+        notebook.add(self.frm_teste, text='teste')
+        #----------------
+        btn_teste = Button(self.frm_teste, text='teste')
+        btn_teste.grid(row=0, column=1)
+        btn_teste['command'] = self.teste
+        
+        
+        image = Image.open("teste1_img_1.png")
+
+        imagem = ImageTk.PhotoImage(image.resize((240, 500)))
+        w = Label(self.frm_teste, image=imagem)
+        w.imagem = imagem
+        w.grid(row=1, column=1)
+        
+    def teste(self):
+        print('teste')
+        data=[]
+        with open('data.csv', 'r') as file:
+            reader = csv.reader(file, delimiter = ';', quoting=csv.QUOTE_NONNUMERIC)
+            for row in reader: # each row is a list
+                data.append(row)
+        
+        plot_2d.mapa_de_calor_cleisson(data, max(max(data)), min(min(data)), 0.5, 0.75,'titulo1', True) 
         
     #Função para atualizar lista das portas COM
     def lista_serial(self):        

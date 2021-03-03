@@ -1,7 +1,13 @@
 import numpy as np
+
+from tkinter import *
+
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.figure import Figure 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 import seaborn as sns
 
 class plot_2d:
@@ -16,8 +22,7 @@ class plot_2d:
     #------------------------------------------------------------
     def mapa_de_calor_cleisson(data, vmax, vmin, step_x, step_y, titulo, flag_save):
         #Gera figura de plotagem 
-        fig = plt.figure()
-        #plt.figure(figsize=(3,10))
+        fig = plt.figure(figsize=(10,10))
         ax = fig.add_axes([0.1,0.1,1.5,1.5])
 
         #Gera mapa de calor
@@ -63,7 +68,7 @@ class plot_2d:
     #------------------------------------------------------------
     def mapa_de_calor_andre(data, vmax, vmin, step_x, step_y, titulo, flag_save):
         #Tamanho da figura - FUTURO ADICIONAR REDIMENSIONAMENTO
-        #plt.figure(figsize=(8,10))
+        plt.figure(figsize=(10,5))
         
         #Cria anotação do grid
         anotacao_y = []
