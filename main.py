@@ -6,23 +6,24 @@ from tkinter import filedialog
 
 import serial.tools.list_ports
 import time
-import openpyxl 
+#import openpyxl
+import csv
 from datetime import datetime
 
 class main_window(Frame):
-    dict_jog = {'up': '$J=G91 Y+% F100000',\
-                'down': '$J=G91 Y-% F100000',\
-                'left': '$J=G91 X-% F100000',\
-                'right': '$J=G91 X+% F100000',
-                'z_up': '$J=G91 Z+% F100000',
-                'z_down': '$J=G91 Z-% F100000'}
+    dict_jog = {'up': '$J=G91 Y+% F200',\
+                'down': '$J=G91 Y-% F200',\
+                'left': '$J=G91 X-% F200',\
+                'right': '$J=G91 X+% F200',
+                'z_up': '$J=G91 Z+% F200',
+                'z_down': '$J=G91 Z-% F200'}
     
     rows, cols = 13, 13  # tamanho da tabela
     rows_disp = 10.5  # numero de linhas apresentado
     cols_disp = 7.75 # numero de colunas apresentado
     var_step_x, var_step_y = 1, 1 # passo de cada eixo
     flag_medindo, flag_stop = False, False
-    tempo_entre_medidas=0.2 #em segundos
+    tempo_entre_medidas=1 #em segundos
     
     def __init__(self):
         super().__init__()
@@ -97,11 +98,15 @@ class main_window(Frame):
         lbl_03 = Label(frm_ctrls, text='Y:')
         lbl_03.grid(row=0, column=2)
         
-        lbl_04 = Label(frm_ctrls, text='             X:')
+        lbl_04 = Label(frm_ctrls, text='   X:')
         lbl_04.grid(row=2, column=0)
         
         lbl_05 = Label(frm_ctrls, text='Z:')
         lbl_05.grid(row=0, column=4)
+        
+        #---botão de home------------------
+        btn_home = btn_up = Button(frm_ctrls, text= 'Origem')
+        btn_home.place(x=343,y=23,width=70,height=83)
         
         #---configuração linhas------------   
         # Primeira linha
@@ -146,11 +151,10 @@ class main_window(Frame):
         btn_z_down.grid(row=3, column=4)
         btn_z_down['command'] = lambda arg1=self.dict_jog['z_down'] : self.cnc_jog(arg1)
 
-        # Janela de seleção do tamanho de passo
-        self.cmb_step = Combobox(frm_ctrls, width=5)
+        self.cmb_step = Combobox(frm_ctrls, width=5)# Janela de seleção do tamanho de passo
         self.cmb_step.grid(row=2, column=4)
-        self.cmb_step['values'] = ['10','5','2','1','0.1']
-        self.cmb_step.current(3)        
+        self.cmb_step['values'] = ['2','1','0.5','0.1']
+        self.cmb_step.current(1)       
         
         lbl_06 = Labelframe(frm_ctrls, text='Log:')
         lbl_06.place(x=10,y=120,width=415,height=170)
@@ -216,8 +220,8 @@ class main_window(Frame):
         
         lbl_par_1 = Label(frm_param, text='Possição Ponto 1 (cm):')
         lbl_par_2 = Label(frm_param, text='Possição Ponto 2 (cm):')
-        lbl_par_3 = Label(frm_param, text='Passo eixo X (mm):')
-        lbl_par_4 = Label(frm_param, text='Passo eixo Y (mm):')
+        lbl_par_3 = Label(frm_param, text='Passo eixo X (cm):')
+        lbl_par_4 = Label(frm_param, text='Passo eixo Y (cm):')
         self.lbl_par_5 = Label(frm_param, text='00,00 00,00')
         self.lbl_par_6 = Label(frm_param, text='00,00 00,00')
         self.lbl_par_7 = Label(frm_param, text='0,0000')
@@ -237,15 +241,12 @@ class main_window(Frame):
         frm_progress.place(x=460,y=660,width=608,height=45)
         
         #---tempo de progresso----------------
-        #chama função determina tempo max
-        
         lbl_10 = Label(frm_progress, text='Tempo estimado de '+'HH'+' : '+'MM'+' : '+'SS')
         lbl_10.place(x=10,y=0,width=300,height=20)
         
         #---barra de progresso----------------
         self.var_pb=DoubleVar()
         self.var_pb.set(1)
-        #chamaria uma função de definição da barra
         
         pb=Progressbar(frm_progress,variable=self.var_pb,maximum=100)
         pb.place(x=200,y=0,width=397,height=20)
@@ -275,7 +276,6 @@ class main_window(Frame):
         btn_save['command'] = self.save
         
         #---nome do frame---------------------
-        #futuramente aplicara função de pontos iniciais
         frm_pont = Labelframe(self, text='Definição dos pontos')
         frm_pont.place(x=10,y=165,width=215,height=75)
         
@@ -316,12 +316,16 @@ class main_window(Frame):
         self.btn_freq_refresh['command'] = self.att_freq
         
         #---botão origem-----------------
-        btn_origin = Button(self, text='Parar Medição')
-        btn_origin.place(x=10,y=320,width=215,height=45)
-        btn_origin['command'] = self.stop_meas
+        btn_stop = Button(self, text='Parar Medição')
+        btn_stop.place(x=305,y=320,width=145,height=45)
+        btn_stop['command'] = self.stop_meas
         
-        btn_start = Button(self, text='Inicia Medição')
-        btn_start.place(x=235,y=320,width=215,height=45)
+        btn_pause = Button(self, text='Pausar Medição')
+        btn_pause.place(x=157,y=320,width=145,height=45)
+        btn_pause['command'] = self.pause_meas
+        
+        btn_start = Button(self, text='Iniciar Medição')
+        btn_start.place(x=10,y=320,width=145,height=45)
         btn_start['command'] = self.measurement
         
         #---constantes e inicializações-------
@@ -338,7 +342,7 @@ class main_window(Frame):
             else:
                 step=self.var_step_y
             
-        jog_cmd_string = jog_cmd_string.replace('%', str(step))        
+        jog_cmd_string = jog_cmd_string.replace('%', '%.4f' % float(step))        
         print(jog_cmd_string)
         
         if (self.serial_cnc != None):
@@ -354,7 +358,6 @@ class main_window(Frame):
     
     def comp_s(self, event):
         self.send_cmd()
-        
 
     def list_serial(self):         
         ports = serial.tools.list_ports.comports()
@@ -369,7 +372,6 @@ class main_window(Frame):
         self.cmb_cnc['values'] = ports
         self.cmb_cnc.set('Escolha...')
         
-        
     def send_cmd(self):
         if (self.serial_cnc != None):
             if (self.serial_cnc.is_open): 
@@ -381,9 +383,7 @@ class main_window(Frame):
                 
                 self.txt_log.see(END)
             
-                
     def open_serial_cnc(self):        
-        
         com_port = self.cmb_cnc.get()        
         com_port = com_port.split()
         
@@ -404,29 +404,44 @@ class main_window(Frame):
                 # new_serial.close()
     
     def start_point(self):
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
         xyz=self.possicao_atual()
         self.start_point_x=float(xyz[0])
         self.start_point_y=float(xyz[1])
         
-        self.lbl_par_5.config(text=(("%.2f %.2f" % (self.start_point_x/10, self.start_point_y/10)).replace('.',',')))
+        self.lbl_par_5.config(text=(("%.2f %.2f" % (self.start_point_x, self.start_point_y)).replace('.',',')))
         self.atualiza_passo()
         
     def end_point(self):#da pra melhorar juntado star_point com end_point passando pra função se é start ou end
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
         xyz=self.possicao_atual()
         self.end_point_x=float(xyz[0])
         self.end_point_y=float(xyz[1])
         
-        self.lbl_par_6.config(text=(("%.2f %.2f" % (self.end_point_x/10, self.end_point_y/10)).replace('.',',')))
+        self.lbl_par_6.config(text=(("%.2f %.2f" % (self.end_point_x, self.end_point_y)).replace('.',',')))
         self.atualiza_passo()
         
     def atualiza_passo(self):
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
         try:
             #passo eixo x
-            self.var_step_x=abs(self.start_point_x-self.end_point_x)/self.cols
+            self.var_step_x=abs(self.start_point_x-self.end_point_x)/(int(self.cols)-1)
             print("xlinha="+str(self.var_step_x))
             self.lbl_par_7.config(text=(("%.4f" % (self.var_step_x)).replace('.',',')))
             #passo eixo y
-            self.var_step_y=abs(self.start_point_y-self.end_point_y)/self.rows
+            self.var_step_y=abs(self.start_point_y-self.end_point_y)/(int(self.rows)-1)
             print("ylinha="+str(self.var_step_y))
             self.lbl_par_8.config(text=(("%.4f" % (self.var_step_y)).replace('.',',')))
         except AttributeError:
@@ -448,13 +463,25 @@ class main_window(Frame):
             return ['0.000', '0.000', '0.000']
         
     def stop_meas(self):
-        print("stop_meas")
         if(self.flag_medindo):
             #envia para o arduino parar
             self.flag_stop=True
+            self.flag_medindo=False
             
-        
+    def pause_meas(self):
+        if(self.flag_medindo):
+            if not (self.flag_stop):
+                #envia para o arduino parar
+                self.flag_stop=True
+            else :
+                pass # continua medida
+            
     def att_matriz(self):
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
         
         valor_x = self.var_matriz_x.get()
         valor_y = self.var_matriz_y.get()
@@ -486,39 +513,38 @@ class main_window(Frame):
         self.frm_tabela = Frame(self, relief=RIDGE)
         self.frm_tabela.place(x=460,y=65,width=608,height=595)
         
-        # Create a frame for the canvas and scrollbar(s).
+        # Cria o frame para area dos botões e scrollbar
         self.frame2 = Frame(self.frm_tabela)
         self.frame2.grid(row=3, column=0, sticky=NW)
         
-        # Add a canvas in that frame.
+        # Cria area dos botões
         self.canvas = Canvas(self.frame2)
         self.canvas.grid(row=0, column=0)
         
-        # Create a vertical scrollbar linked to the canvas.
+        # Cria scrollbar vertical e anexa a area de botões
         vsbar = Scrollbar(self.frame2, orient=VERTICAL, command=self.canvas.yview)
         vsbar.grid(row=0, column=1, sticky=NS)
         self.canvas.configure(yscrollcommand=vsbar.set)
         
-        # Create a horizontal scrollbar linked to the canvas.
+        # Cria scrollbar horizontal e anexa a area de botões
         hsbar = Scrollbar(self.frame2, orient=HORIZONTAL, command=self.canvas.xview)
         hsbar.grid(row=1, column=0, sticky=EW)
         self.canvas.configure(xscrollcommand=hsbar.set)
 
-        # Create a frame on the canvas to contain the buttons.
+        # Cria frame que contem os botões
         self.buttons_frame = Frame(self.canvas)
         
-        #creat matrix for buttons
+        # Cria matriz de botões
         self.button_matriz = [[None for _ in range(int(valor_x))] for _ in range(int(valor_y))]
-        #print("button_matriz["+valor_y+"]["+valor_x+"]=")
-        #print(self.button_matriz)
         
-        # Add the buttons to the frame.
+        # Adiciona botões no frame
         for i in range(0, int(valor_y)):
             for j in range(0, int(valor_x)):
                 self.button_matriz[i][j] = Button(self.buttons_frame, text="m[%d,%d]\nx=%d\ny=%d" % (int(valor_x), int(valor_y),j+1,i+1))
                 self.button_matriz[i][j].grid(row=i, column=j)
+                self.button_matriz[i][j]['command'] = lambda var1=i, var2=j: self.meas_ponto(var1,var2)
         
-        # Create canvas window to hold the buttons_frame.
+        # Cria janela para os botões
         self.canvas.create_window((0,0), window=self.buttons_frame, anchor=NW)
 
         self.buttons_frame.update_idletasks()  # Needed to make bbox info available.
@@ -536,7 +562,64 @@ class main_window(Frame):
         self.rows=int(valor_y)
         self.atualiza_passo()
         
+    def meas_ponto(self,row,col):
+        try:
+            if(self.start_point_x<self.end_point_x): x = float(self.start_point_x)
+            else: x = float(self.end_point_x)
+            if(self.start_point_y>self.end_point_y): y = float(self.start_point_y)
+            else: y = float(self.end_point_y)
+            print("ponto inicial= "+str(x)+' '+str(y))
+        except AttributeError:
+            messagebox.showwarning(title="Erro!!!Limites não definidos",
+                                   message="Pontos não definidos    ")
+            return
+        
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função\ndurante a medição")
+            return
+        
+        self.flag_medindo=True
+        print("medir ponto x="+str(col)+" y="+str(row))            
+        
+        #manda pro ponto inicial
+        x=x+(self.var_step_x*col)
+        xyz=self.possicao_atual()
+        #eixo x
+        x=x-float(xyz[0])
+        if not (x==0):
+            print("movimento x="+str(x))
+            if(x>0):arg=self.dict_jog['right']
+            elif(x<0):arg=self.dict_jog['left']
+            aux=self.var_step_x
+            self.var_step_x=abs(x)
+            self.cnc_jog(arg)
+            self.var_step_x=aux
+            time.sleep(4) #colocar delay
+        #eixo y
+        y=y+(self.var_step_y*row)    
+        y=y-float(xyz[1])
+        if not (y==0):
+            print("movimento y="+str(y))
+            if(y>0):arg=self.dict_jog['up']
+            elif(y<0):arg=self.dict_jog['down']
+            aux=self.var_step_y
+            self.var_step_y=abs(y)
+            self.cnc_jog(arg)
+            self.var_step_y=aux
+            time.sleep(4) #colocar delay
+        
+        
+        self.flag_medindo=False
+        
     def att_freq(self):
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(row)+" x="+str(col))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
+        
         freq = self.var_freq.get()
         if not (freq.isdigit()):
             messagebox.showwarning(title="Erro nos valor de Frequência",
@@ -552,11 +635,16 @@ class main_window(Frame):
             freq=int(freq)*pow(10, 6)
         else:
             freq=int(freq)*pow(10, 9)
-        #try: #verificar se analisador está conectado
+        #função que manda proa analisador
         print('SYST:MODE RMOD')#ativa modo reciver
         print("RMOD:FREQ {}.format("+ str(freq) +")")#define frequencia do modo reciver
     
     def measurement(self):
+        if (self.flag_medindo):
+            print("Botão pressionado y="+str(self.rows)+" x="+str(self.cols))
+            messagebox.showwarning(title="Erro Ação impossivel",
+                                   message="Não é possivel realizar está função")
+            return
         #manda pro ponto inicial (canto superior esquerdo)
         try:
             if(self.start_point_x<self.end_point_x): x = float(self.start_point_x)
@@ -568,31 +656,36 @@ class main_window(Frame):
             messagebox.showwarning(title="Erro!!!Limites não definidos",
                                    message="Pontos não definidos    ")
             return
+        
         self.meas_time = datetime.now()
         self.flag_medindo=True
+        
+        self.var_pb.set(1)
         
         #manda pro ponto inicial
         xyz=self.possicao_atual()
         #eixo x
         x= x-float(xyz[0])
-        print("movimento x="+str(x))
-        if(x>0):arg=self.dict_jog['left']
-        elif(x<0):arg=self.dict_jog['right']
-        aux=self.var_step_x
-        self.var_step_x=abs(x)
-        self.cnc_jog(arg)
-        self.var_step_x=aux
-        #colocar delay
+        if not (x==0):
+            print("movimento x="+str(x))
+            if(x>0):arg=self.dict_jog['right']
+            elif(x<0):arg=self.dict_jog['left']
+            aux=self.var_step_x#nova função na precisa de buffer
+            self.var_step_x=abs(x)
+            self.cnc_jog(arg)
+            self.var_step_x=aux
+            time.sleep(4) #colocar delay
         #eixo y
         y=y-float(xyz[1])
-        print("movimento y="+str(y))
-        if(y>0):arg=self.dict_jog['up']
-        elif(y<0):arg=self.dict_jog['down']
-        aux=self.var_step_y
-        self.var_step_y=abs(y)
-        self.cnc_jog(arg)
-        self.var_step_y=aux
-        #colocar delay
+        if not (y==0):
+            print("movimento y="+str(y))
+            if(y>0):arg=self.dict_jog['up']
+            elif(y<0):arg=self.dict_jog['down']
+            aux=self.var_step_y
+            self.var_step_y=abs(y)
+            self.cnc_jog(arg)
+            self.var_step_y=aux
+            time.sleep(4) #colocar delay
         
         self.matrix_meas = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
         
@@ -604,6 +697,8 @@ class main_window(Frame):
         for i in range(0, self.rows):#linha
             if(flag_ordem):
                 for j in range(0, self.cols):#coluna
+                    if(self.flag_stop):
+                        return
                     self.matrix_meas[i][j]=99# entra valor medido
                     self.button_matriz[i][j].config(text="meas+\nx=%d\ny=%d" % (j+1, i+1))
                     var_progressbar=var_progressbar+step_progressbar
@@ -612,11 +707,13 @@ class main_window(Frame):
                     print("Mede")
                     if(j+1<self.cols):
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                        arg=self.dict_jog['right']
-                        self.cnc_jog(arg)
+                        #arg=self.dict_jog['right']
+                        self.cnc_jog(self.dict_jog['right'])
                 flag_ordem=False
             else:
                 for j in reversed(range(0,self.cols)):#coluna
+                    if(self.flag_stop):
+                        return
                     self.matrix_meas[i][j]=98# entra valor medido
                     self.button_matriz[i][j].config(text="meas-\nx=%d\ny=%d" % (j+1, i+1))
                     var_progressbar=var_progressbar+step_progressbar
@@ -625,27 +722,39 @@ class main_window(Frame):
                     print ("Mede")
                     if(j!=0):
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                        arg=self.dict_jog['left']
-                        self.cnc_jog(arg)
+                        #arg=self.dict_jog['left']
+                        self.cnc_jog(self.dict_jog['left'])
                 flag_ordem=True
             if(i+1<self.rows):
                 time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                arg=self.dict_jog['down']
-                self.cnc_jog(arg)
+                #arg=self.dict_jog['down']
+                self.cnc_jog(self.dict_jog['down'])
                 
         self.flag_medindo=False
+        
     def save(self):
         try:
-            self.meas_time.strftime("_%d-%m-%Y_%H-%M")
-            file_path=(filedialog.askdirectory()+'\\'+self.str_save.get()+self.meas_time.strftime("_%d-%m-%Y_%H-%M")+".xlsx")
-            wb = openpyxl.Workbook()
+            self.meas_time.strftime
+            file_path=(filedialog.askdirectory()+'\\'+self.str_save.get()+
+                       self.meas_time.strftime("_%d-%m-%Y_%H-%M")+".csv")
+            
+            """wb = openpyxl.Workbook()
             sheet = wb.active
             for i in range(1, self.rows+1):
                 for j in range(1, self.cols+1):
                     celula = sheet.cell(row=i, column=j)
                     celula.value = self.matrix_meas[i-1][j-1]
                     #no futuro se necessário adicionar formatação da celula para numerica
-            wb.save(file_path)
+            wb.save(file_path)"""
+            
+            # abrir arquivo csv mode "write"
+            file = open(file_path, 'w', newline ='') 
+
+            # escreve resultado da medida no arquivo csv
+            with file:	 
+                write = csv.writer(file, delimiter=';') 
+                write.writerows(self.matrix_meas) 
+            
         except AttributeError:
             messagebox.showwarning(title="Erro!!!Medida não realizada", message="Nenhuma informação para salvar ")
         
