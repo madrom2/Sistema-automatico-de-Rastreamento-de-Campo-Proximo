@@ -33,10 +33,10 @@ Recursos essênciais:
 - [ ] Tempo estimado da medição
 - [x] Barra de progresso da medição
 - [ ] Botão e comando para "Home"
-- [ ] Escolha de ponto para remedir
+- [x] Escolha de ponto para remedir
 
 Após terminar os recursos essênciais:
-- [ ] Divisão em classes de interface, CNC e istrumento
+- [x] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
 - [ ] Interação com código de plotagem
 
