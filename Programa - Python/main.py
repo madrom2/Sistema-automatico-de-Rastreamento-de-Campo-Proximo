@@ -19,7 +19,7 @@ class main_window(Frame):
                 'z_down': '$J=G91 Z-% F200'}
     
     rows, cols = 13, 13  # tamanho da tabela
-    rows_disp = 10.5  # numero de linhas apresentado
+    rows_disp = 10.35  # numero de linhas apresentado
     cols_disp = 7.75 # numero de colunas apresentado
     var_step_x, var_step_y = 1, 1 # passo de cada eixo
     flag_medindo, flag_stop = False, False
@@ -86,7 +86,7 @@ class main_window(Frame):
         
         #---nome do frame---------------------
         frm_ctrls = Labelframe(self.frm_notebook1, text='Controle')
-        frm_ctrls.place(x=10,y=355,width=440,height=340)
+        frm_ctrls.place(x=10,y=345,width=440,height=340)
         
         #---configuração da linha/coluna------
         frm_ctrls.columnconfigure(0, pad=3)
@@ -215,7 +215,7 @@ class main_window(Frame):
         
         #---nome do frame---------------------
         frm_param = Labelframe(self.frm_notebook1, text='Parametros')
-        frm_param.place(x=235,y=80,width=215,height=225)
+        frm_param.place(x=235,y=80,width=215,height=215)
         
         frm_param.columnconfigure(0, pad=3)
         frm_param.columnconfigure(1, pad=3)
@@ -245,7 +245,7 @@ class main_window(Frame):
         
         #---nome do frame---------------------
         frm_progress = Labelframe(self.frm_notebook1)
-        frm_progress.place(x=460,y=650,width=608,height=45)
+        frm_progress.place(x=460,y=640,width=608,height=45)
         
         #---tempo de progresso----------------
         lbl_10 = Label(frm_progress, text='Tempo estimado de '+'HH'+' : '+'MM'+' : '+'SS')
@@ -284,19 +284,19 @@ class main_window(Frame):
         
         #---nome do frame---------------------
         frm_pont = Labelframe(self.frm_notebook1, text='Definição dos pontos')
-        frm_pont.place(x=10,y=155,width=215,height=75)
+        frm_pont.place(x=10,y=155,width=215,height=65)
         
         btn_pont_start = Button(frm_pont, text='Ponto 1')
-        btn_pont_start.place(x=5,y=1,width=100,height=50)
+        btn_pont_start.place(x=5,y=1,width=100,height=40)
         btn_pont_start['command'] = self.start_point
         
         btn_pont_end = Button(frm_pont, text='Ponto 2')
-        btn_pont_end.place(x=110,y=1,width=95,height=50)
+        btn_pont_end.place(x=110,y=1,width=95,height=40)
         btn_pont_end['command'] = self.end_point
         
         #---nome do frame---------------------
         frm_freq = Labelframe(self.frm_notebook1, text='Frequência')
-        frm_freq.place(x=10,y=230,width=215,height=75)
+        frm_freq.place(x=10,y=220,width=215,height=75)
         
         frm_freq.columnconfigure(0, pad=3)
         frm_freq.columnconfigure(1, pad=3)
@@ -322,30 +322,106 @@ class main_window(Frame):
         self.btn_freq_refresh.place(x=68,y=25,width=136,height=25)
         self.btn_freq_refresh['command'] = self.att_freq
         
-        #---botão origem-----------------
+        #-Botões de atuação medição
         btn_stop = Button(self.frm_notebook1, text='Parar Medição')
-        btn_stop.place(x=305,y=310,width=145,height=45)
+        btn_stop.place(x=305,y=300,width=145,height=40)
         btn_stop['command'] = self.stop_meas
         
         self.btn_pause = Button(self.frm_notebook1, text='Pausar Medição')
-        self.btn_pause.place(x=157,y=310,width=145,height=45)
+        self.btn_pause.place(x=157,y=300,width=145,height=40)
         self.btn_pause['command'] = self.pause_meas
         
         btn_start = Button(self.frm_notebook1, text='Iniciar Medição')
-        btn_start.place(x=10,y=310,width=145,height=45)
+        btn_start.place(x=10,y=300,width=145,height=40)
         btn_start['command'] = self.measurement
         
         #-Notebook ed plotagem
         self.frm_notebook2 = Frame(notebook)
         self.frm_notebook2.pack(fill=BOTH, expand=True)
-                
         notebook.add(self.frm_notebook2, text='      Mapa de calor      ')
         
+        #--Parametros de plotagem
+        frm_plot = Labelframe(self.frm_notebook2, text='Escolhas para plot')
+        frm_plot.place(x=10,y=5,width=240,height=680)
         
-        #---constantes e inicializações-------
+        frm_plot.rowconfigure(0, pad=3)
+        frm_plot.rowconfigure(1, pad=3)
+        
+        frm_plot.columnconfigure(0, pad=3)
+        frm_plot.columnconfigure(1, pad=3)
+        
+        #---Label frame da barra de cor
+        frm_plot_parametro = Labelframe(frm_plot, text='Barra de cor')
+        frm_plot_parametro.place(x=5,y=1,width=225,height=77)
+        
+        frm_plot_parametro.rowconfigure(0, pad=3)
+        frm_plot_parametro.rowconfigure(1, pad=3)
+        
+        frm_plot_parametro.columnconfigure(0, pad=3)
+        frm_plot_parametro.columnconfigure(1, pad=3)
+        
+        #----Definição de parametros da barra de cor
+        lbl_21 = Label(frm_plot_parametro, text='MIN. :')
+        lbl_21.grid(row=0, column=0, padx= 3)
+        self.var_plot_max=Entry(frm_plot_parametro, width=8)
+        self.var_plot_max.insert(END, '%d' % self.rows)
+        self.var_plot_max.grid(row=0, column=1, padx= 3)
+        
+        lbl_22 = Label(frm_plot_parametro, text=' MAX. :')
+        lbl_22.grid(row=0, column=2, padx= 3)
+        self.var_plot_min=Entry(frm_plot_parametro, width=8)
+        self.var_plot_min.insert(END, '%d' % self.cols)
+        self.var_plot_min.grid(row=0, column=3, padx= 3)
+        
+        #----Combo box escolha de cor
+        self.cmb_plot_cor = Combobox(frm_plot_parametro, width=5)# Janela de seleção do tamanho de passo
+        self.cmb_plot_cor.place(x=89,y=30,width=124,height=20)
+        self.cmb_plot_cor['values'] = ['infernus','outra','outra','outra']
+        self.cmb_plot_cor.current(0) 
+        
+        lbl_21 = Label(frm_plot_parametro, text='Tabela de COR: ')
+        lbl_21.place(x=1,y=30,width=85,height=20)
+        
+        #---Titulo do plot
+        frm_plot_titulo = Labelframe(frm_plot, text='Título')
+        frm_plot_titulo.place(x=5,y=80,width=225,height=72)
+        
+        lbl_22 = Label(frm_plot_titulo, text=' Título do plot :')
+        lbl_22.grid(row=0, column=0, padx= 3)
+        self.var_plot_titulo=Entry(frm_plot_titulo, width=80)
+        self.var_plot_titulo.insert(END, 'nome_exemplo')
+        self.var_plot_titulo.place(x=5,y=25,width=210,height=20)
+        
+        #---Qual dado ser plotado
+        frm_plot_titulo = Labelframe(frm_plot, text='Dado plot')
+        frm_plot_titulo.place(x=5,y=155,width=225,height=190)
+        
+        #----Botões de escolha de dados
+        lbl_23 = Label(frm_plot_titulo, text='Escolha qual dos dados :')
+        lbl_23.place(x=5,y=1,width=200,height=20)
+        
+        btn_plt_dado_atual = Button(frm_plot_titulo, text='Dados da medida\n         ATUAL')
+        btn_plt_dado_atual.place(x=5,y=25,width=210,height=40)
+        #btn_plt_dado_atual['command'] = self.
+        
+        lbl_23 = Label(frm_plot_titulo, text='OU')
+        lbl_23.place(x=97,y=70,width=20,height=20)
+        
+        btn_plt_dado_arquivo = Button(frm_plot_titulo, text='Dados do arquivo\n           CSV')
+        btn_plt_dado_arquivo.place(x=5,y=95,width=210,height=40)
+        #btn_plt_dado_arquivo['command'] = self.
+        
+        #---apresentação de alguns valores
+        frm_plot_teste = Labelframe(frm_plot, text='futura aba')
+        frm_plot_teste.place(x=5,y=347,width=225,height=305)
+        
+        #--Apresentação do mapa de calor
+        frm_heatmap = Labelframe(self.frm_notebook2, text='Mapa de calor')
+        frm_heatmap.place(x=260,y=5,width=805,height=680)
+        
+        #Constantes e inicializações
         self.lista_serial()
         self.att_matriz()
-        self.att_freq()
         
     #Função para atualizar lista das portas COM
     def lista_serial(self):        
@@ -409,6 +485,21 @@ class main_window(Frame):
         if (self.flag_medindo):
             messagebox.showwarning(title="Erro Ação impossivel",
                                    message="Não é possivel realizar está função\ndurante a medição")
+            return True
+        else:
+            return False
+    
+    #Função se string contem somente numero e maior que zero     
+    def verifica_string(self, string, mensagem):
+        #Caso string contem somente numero
+        if not(string.isdigit() and string.isdigit()):
+            messagebox.showwarning(title=('Erro nos valores de '+mensagem),
+                                   message=('O valor '+mensagem+' deve ser um numero decimal maior que zero'))
+            return True
+        
+        if(int(string)==0 or int(string)==0):
+            messagebox.showwarning(title=('Erro nos valores de '+mensagem),
+                                   message=('O valor '+mensagem+' deve ser um numero decimal maior que zero'))
             return True
         else:
             return False
@@ -480,8 +571,8 @@ class main_window(Frame):
         valor_y = self.var_matriz_y.get()
         
         #tratamento do valor de entrada
-        if not(valor_x.isdigit() and valor_y.isdigit()):
-            messagebox.showwarning(title="Erro nos valores X e Y", message="X e Y deve ser um numero decimal maior que zero\n ")
+        if (self.verifica_string(valor_x, 'X e Y') or
+            self.verifica_string(valor_y, 'X e Y')):
             return
         
         if(int(valor_x)==0 or int(valor_y)==0):
@@ -504,7 +595,7 @@ class main_window(Frame):
         #//////////////////////////////////////////////////////////////////////////////////
         
         self.frm_tabela = Frame(self.frm_notebook1, relief=RIDGE)
-        self.frm_tabela.place(x=460,y=55,width=608,height=595)
+        self.frm_tabela.place(x=460,y=55,width=608,height=590)
         
         # Cria o frame para area dos botões e scrollbar
         self.frame2 = Frame(self.frm_tabela)
@@ -605,14 +696,11 @@ class main_window(Frame):
             return
         
         freq = self.var_freq.get()
-        if not (freq.isdigit()):
-            messagebox.showwarning(title="Erro nos valor de Frequência",
-                                   message="Frequência deve ser um numero decimal maior que zero\n ")
+        
+        #Verifica se string contem somente numero e maior que zero
+        if (self.verifica_string(freq, 'frequência')):
             return
-        if(int(freq)==0):
-            messagebox.showwarning(title="Erro nos valor de Frequência",
-                                   message="Frequência deve ser um numero decimal maior que zero\n ")
-            return
+        
         if(self.cmb_freq.get()=="KHz"):
             freq=int(freq)*pow(10, 3)
         elif(self.cmb_freq.get()=="MHz"):
