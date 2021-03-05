@@ -1,13 +1,24 @@
+#Biblioteca de interface
 from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
 
-import serial.tools.list_ports
-import time
-import csv
-from datetime import datetime
+#Biblioteca do mapa de calor
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.figure import Figure 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from mpl_toolkits.axes_grid1 import Divider, Size
 
+import serial.tools.list_ports   #Bibliote de conecção serial
+import time                      #Biblioteca para delay
+import csv                       #Biblioteca salvar dados em arquivo csv
+import numpy as np               #Biblioteca de array
+from datetime import datetime    #Biblioteca do tempo da maquina
+
+#Escrita e Leitura serial com grbl
 from cnc_controle import controle_cnc
 
 class main_window(Frame):
@@ -376,7 +387,7 @@ class main_window(Frame):
         #----Combo box escolha de cor
         self.cmb_plot_cor = Combobox(frm_plot_parametro, width=5)# Janela de seleção do tamanho de passo
         self.cmb_plot_cor.place(x=89,y=30,width=124,height=20)
-        self.cmb_plot_cor['values'] = ['infernus','outra','outra','outra']
+        self.cmb_plot_cor['values'] = ['infernus','viridis','gist_heat','hot']
         self.cmb_plot_cor.current(0) 
         
         lbl_21 = Label(frm_plot_parametro, text='Tabela de COR: ')
@@ -392,9 +403,21 @@ class main_window(Frame):
         self.var_plot_titulo.insert(END, 'nome_exemplo')
         self.var_plot_titulo.place(x=5,y=25,width=210,height=20)
         
+        #---Filtro no plot
+        frm_plot_interpolacao = Labelframe(frm_plot, text='Filtro')
+        frm_plot_interpolacao.place(x=5,y=155,width=225,height=49)
+        
+        lbl_24 = Label(frm_plot_interpolacao, text=' Interpolação :')
+        lbl_24.grid(row=0, column=0, padx= 3)
+        
+        self.cmb_plot_interpolacao = Combobox(frm_plot_interpolacao, width=17)#janela de escolha interpolacao
+        self.cmb_plot_interpolacao.grid(row=0, column=1, padx= 3)
+        self.cmb_plot_interpolacao['values'] = ['none','spline16','catrom','gaussian','senc']
+        self.cmb_plot_interpolacao.current(3)
+        
         #---Qual dado ser plotado
         frm_plot_titulo = Labelframe(frm_plot, text='Dado plot')
-        frm_plot_titulo.place(x=5,y=155,width=225,height=190)
+        frm_plot_titulo.place(x=5,y=210,width=225,height=190)
         
         #----Botões de escolha de dados
         lbl_23 = Label(frm_plot_titulo, text='Escolha qual dos dados :')
@@ -408,20 +431,21 @@ class main_window(Frame):
         lbl_23.place(x=97,y=70,width=20,height=20)
         
         btn_plt_dado_arquivo = Button(frm_plot_titulo, text='Dados do arquivo\n           CSV')
-        btn_plt_dado_arquivo.place(x=5,y=95,width=210,height=40)
+        btn_plt_dado_arquivo.place(x=5,y=94,width=210,height=40)
         #btn_plt_dado_arquivo['command'] = self.
         
         #---apresentação de alguns valores
         frm_plot_teste = Labelframe(frm_plot, text='futura aba')
-        frm_plot_teste.place(x=5,y=347,width=225,height=305)
+        frm_plot_teste.place(x=5,y=476,width=225,height=180)
         
         #--Apresentação do mapa de calor
-        frm_heatmap = Labelframe(self.frm_notebook2, text='Mapa de calor')
-        frm_heatmap.place(x=260,y=5,width=805,height=680)
+        self.frm_heatmap = Labelframe(self.frm_notebook2, text='Mapa de calor')
+        self.frm_heatmap.place(x=260,y=5,width=805,height=680)
         
         #Constantes e inicializações
         self.lista_serial()
         self.att_matriz()
+        self.teste()
         
     #Função para atualizar lista das portas COM
     def lista_serial(self):        
@@ -804,21 +828,84 @@ class main_window(Frame):
             file = open(file_path, 'w', newline ='') 
 
             #Escreve resultado da medida no arquivo csv
-            with file:	 
+            with file:
                 write = csv.writer(file, delimiter=';') 
                 write.writerows(self.matrix_meas) 
             
         except AttributeError:
             messagebox.showwarning(title="Erro!!!Medida não realizada", message="Nenhuma informação para salvar ")
+    
+    def teste(self):
+        data=[]
+        with open('data3.csv', 'r') as file:
+            reader = csv.reader(file, delimiter = ';', quoting=csv.QUOTE_NONNUMERIC)
+            for row in reader: # each row is a list
+                data.append(row)
         
+        self.mapa_de_calor_cleisson(data, max(max(data)), min(min(data)), 1, 0.5, False)
+        
+    def mapa_de_calor_cleisson(self, data, vmax, vmin, step_x, step_y, flag_save):
+        #Gera figura de plotagem 
+        fig, ax = plt.subplots()
+        
+        interpolacao='gaussian'
+        cmap='inferno'
+        #Gera mapa de calor
+        im = ax.imshow(data, interpolation=interpolacao, cmap=cmap, vmax=vmax, vmin=vmin)
+
+        #Cria anotação do grid
+        anotacao_y = []
+        for i in range (len(data)):
+            anotacao_y.append('%.2fcm' % float(i*step_y))
+            
+        anotacao_x=[]
+        for i in range (len(data[0])):
+            anotacao_x.append('%.2fcm' % float(i*step_x))
+            
+        #Configuração de apresentação das anotações
+        ax.set_xticks(np.arange(len(anotacao_x)))
+        ax.set_yticks(np.arange(len(anotacao_y)))
+        ax.set_xticklabels(anotacao_x)
+        ax.set_yticklabels(anotacao_y)
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+        #Titulo do mapa de calor
+        ax.set_title('cleisson - ')
+
+        #Adiciona barra de cor
+        plt.colorbar(im, shrink=0.8)
+        
+        #Tamanho do mapa de calor
+        plt.xlim(right=len(data[0])-0.5)
+        plt.xlim(left=-0.5)
+        plt.ylim(top=-0.5)
+        plt.ylim(bottom=len(data)-0.5)
+        plt.grid(color='w', which='major', alpha=0.5)
+        
+        if (flag_save):
+            #Salva imagem
+            plt.savefig('_img_1.png',bbox_inches="tight")
+        else:   
+            #Plot imagem
+            canvas = FigureCanvasTkAgg(fig, master = self.frm_heatmap)
+            canvas.draw()
+            if(len(data)>=len(data[0])):
+                canvas.get_tk_widget().place(x=5,y=5,height=650)
+            else:
+                canvas.get_tk_widget().place(x=5,y=5,width=790)
+    
 def main():
     #---Gera janela-----------------------
     root = Tk()
     root.geometry('1080x720')
     root.resizable(0, 0) 
     #---icone da janela-------------------
-    #icone = PhotoImage(file = 'labcem_icone.png') 
-    #root.iconphoto(False, icone) 
+    try:
+        icone = PhotoImage(file = 'labcem_icone.png') 
+        root.iconphoto(False, icone)
+    except:
+        pass
     #-------------------------------------
     app = main_window()
     root.mainloop()
