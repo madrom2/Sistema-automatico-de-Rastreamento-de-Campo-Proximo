@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from mpl_toolkits.axes_grid1 import Divider, Size
 
 import serial.tools.list_ports   #Bibliote de conecção serial
 import time                      #Biblioteca para delay
@@ -375,13 +374,13 @@ class main_window(Frame):
         lbl_21 = Label(frm_plot_parametro, text='MIN. :')
         lbl_21.grid(row=0, column=0, padx= 3)
         self.var_plot_max=Entry(frm_plot_parametro, width=8)
-        self.var_plot_max.insert(END, '%d' % self.rows)
+        self.var_plot_max.insert(END, '%d' % 10)
         self.var_plot_max.grid(row=0, column=1, padx= 3)
         
         lbl_22 = Label(frm_plot_parametro, text=' MAX. :')
         lbl_22.grid(row=0, column=2, padx= 3)
         self.var_plot_min=Entry(frm_plot_parametro, width=8)
-        self.var_plot_min.insert(END, '%d' % self.cols)
+        self.var_plot_min.insert(END, '%d' % -80)
         self.var_plot_min.grid(row=0, column=3, padx= 3)
         
         #----Combo box escolha de cor
@@ -415,9 +414,28 @@ class main_window(Frame):
         self.cmb_plot_interpolacao['values'] = ['none','spline16','catrom','gaussian','senc']
         self.cmb_plot_interpolacao.current(3)
         
+        #---Habilitar grid
+        frm_plot_grid = Labelframe(frm_plot, text='Grade')
+        frm_plot_grid.place(x=5,y=207,width=107,height=67)
+        
+        self.flag_grid=True
+        self.btn_plt_grid = Button(frm_plot_grid, text='      Grade\nHABILITADO')
+        self.btn_plt_grid.place(x=5,y=1,width=93,height=40)
+        #self.btn_plt_grid['command'] = self.
+        
+        #---Habilitar label
+        frm_plot_grid = Labelframe(frm_plot, text='Anotação eixos')
+        frm_plot_grid.place(x=123,y=207,width=107,height=67)
+        
+        self.flag_label=True
+        self.btn_plt_label = Button(frm_plot_grid, text='   Anotação\nHABILITADO')
+        self.btn_plt_label.place(x=5,y=1,width=93,height=40)
+        #self.btn_plt_label['command'] = self.
+        
+        
         #---Qual dado ser plotado
         frm_plot_titulo = Labelframe(frm_plot, text='Dado plot')
-        frm_plot_titulo.place(x=5,y=210,width=225,height=190)
+        frm_plot_titulo.place(x=5,y=283,width=225,height=190)
         
         #----Botões de escolha de dados
         lbl_23 = Label(frm_plot_titulo, text='Escolha qual dos dados :')
