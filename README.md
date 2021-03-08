@@ -21,6 +21,8 @@ Com as seguintes bibliotecas:
 - Time : Adicionar atraso (somente para teste);
 - Csv : Leitura e escrita de arquivos csv;
 - Datetime : Tempo atual da máquina (pós-fixo nome da arquivo);
+- Matplotlib : Gera Mapa de calor
+- Numpy : Operações com vetores multidimensionais
 ****
 #### Lista de controle 
 Recursos essênciais:
@@ -45,5 +47,5 @@ Após terminar os recursos essênciais:
 - [ ] Interação com código de plotagem
 
 Possíveis recursos adicionais:
+- Modo noturno
 - Adicionar eixo Z a medição
-- Tabela alterar de cor dependendo da intensidade de campo
