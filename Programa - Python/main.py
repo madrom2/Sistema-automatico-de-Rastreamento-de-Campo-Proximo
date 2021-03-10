@@ -3,18 +3,19 @@ from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
+#from ttkthemes import ThemedStyle
 
 #Biblioteca do mapa de calor
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.figure import Figure 
+#from matplotlib.colors import LinearSegmentedColormap
+#from matplotlib.figure import Figure 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import serial.tools.list_ports   #Bibliote de conecção serial
 import time                      #Biblioteca para delay
 import csv                       #Biblioteca salvar dados em arquivo csv
-import numpy as np               #Biblioteca de array
+import numpy as np               #Biblioteca de array FUTURO RETIRAR
 from datetime import datetime    #Biblioteca do tempo da maquina
 
 #Escrita e Leitura serial com grbl
@@ -33,6 +34,7 @@ class main_window(Frame):
     cols_disp = 7.75 # numero de colunas apresentado
     var_step_x, var_step_y = 1, 1 # passo de cada eixo
     flag_medindo, flag_stop = False, False
+    flag_grade, flag_anotacao, flag_auto_maxmin= True, True, True
     tempo_entre_medidas=1 #em segundos
     
     def __init__(self):
@@ -43,8 +45,16 @@ class main_window(Frame):
         self.serial_cnc = None
     
     def initUI(self):
+        #-Altera tema da janela
+        #style = ThemedStyle(self)
+        #style.set_theme("black")
+        
+        #style=Style()
+        #print(style.theme_names())
+        #style.theme_use("black")
+        
         #---nome da janela---------------------
-        self.master.title('Controle Auto Scan')
+        self.master.title('Controle Auto Scan')#futuro nome?
         self.pack(fill=BOTH, expand=True)
         
         notebook = Notebook(self)
@@ -80,6 +90,7 @@ class main_window(Frame):
         
         #---Atualização de ports-----------
         btn_refresh = Button(frm_01, text='Atualizar')
+        
         btn_refresh.place(x=353,y=1,width=75,height=53)
         btn_refresh['command'] = self.lista_serial
         
@@ -352,49 +363,47 @@ class main_window(Frame):
         
         #--Parametros de plotagem
         frm_plot = Labelframe(self.frm_notebook2, text='Escolhas para plot')
-        frm_plot.place(x=10,y=5,width=240,height=680)
-        
-        frm_plot.rowconfigure(0, pad=3)
-        frm_plot.rowconfigure(1, pad=3)
-        
-        frm_plot.columnconfigure(0, pad=3)
-        frm_plot.columnconfigure(1, pad=3)
+        frm_plot.place(x=10,y=5,width=240,height=680)  
         
         #---Label frame da barra de cor
         frm_plot_parametro = Labelframe(frm_plot, text='Barra de cor')
-        frm_plot_parametro.place(x=5,y=1,width=225,height=77)
-        
-        frm_plot_parametro.rowconfigure(0, pad=3)
-        frm_plot_parametro.rowconfigure(1, pad=3)
-        
-        frm_plot_parametro.columnconfigure(0, pad=3)
-        frm_plot_parametro.columnconfigure(1, pad=3)
+        frm_plot_parametro.place(x=5,y=1,width=225,height=150)
         
         #----Definição de parametros da barra de cor
-        lbl_21 = Label(frm_plot_parametro, text='MIN. :')
+        frm_plot_maxmin = Labelframe(frm_plot_parametro, text='Entrada manual:')
+        frm_plot_maxmin.place(x=5,y=0,width=212,height=47)
+        
+        lbl_21 = Label(frm_plot_maxmin, text='MAX. :')
         lbl_21.grid(row=0, column=0, padx= 3)
-        self.var_plot_max=Entry(frm_plot_parametro, width=8)
+        self.var_plot_max=Entry(frm_plot_maxmin, width=8)
         self.var_plot_max.insert(END, '%d' % 10)
         self.var_plot_max.grid(row=0, column=1, padx= 3)
         
-        lbl_22 = Label(frm_plot_parametro, text=' MAX. :')
+        lbl_22 = Label(frm_plot_maxmin, text='MIN. :')
         lbl_22.grid(row=0, column=2, padx= 3)
-        self.var_plot_min=Entry(frm_plot_parametro, width=8)
+        self.var_plot_min=Entry(frm_plot_maxmin, width=8)
         self.var_plot_min.insert(END, '%d' % -80)
         self.var_plot_min.grid(row=0, column=3, padx= 3)
         
+        lbl_ou = Label(frm_plot_parametro, text=' OU')
+        lbl_ou.place(x=95,y=47,width=30,height=15)
+        
+        self.btn_plt_maxmin = Button(frm_plot_parametro, text='MAX/MIN automático HABILITADO')
+        self.btn_plt_maxmin.place(x=5,y=65,width=213,height=34)
+        self.btn_plt_maxmin['command'] = self.plot_auto_maxmin
+        
         #----Combo box escolha de cor
+        lbl_21 = Label(frm_plot_parametro, text='Tabela de COR: ')
+        lbl_21.place(x=5,y=105,width=85,height=20)
         self.cmb_plot_cor = Combobox(frm_plot_parametro, width=5)# Janela de seleção do tamanho de passo
-        self.cmb_plot_cor.place(x=89,y=30,width=124,height=20)
-        self.cmb_plot_cor['values'] = ['infernus','viridis','gist_heat','hot']
+        self.cmb_plot_cor.place(x=94,y=105,width=123,height=20)
+        self.cmb_plot_cor['values'] = ['inferno','viridis','gist_heat','hot']
         self.cmb_plot_cor.current(0) 
         
-        lbl_21 = Label(frm_plot_parametro, text='Tabela de COR: ')
-        lbl_21.place(x=1,y=30,width=85,height=20)
         
         #---Titulo do plot
         frm_plot_titulo = Labelframe(frm_plot, text='Título')
-        frm_plot_titulo.place(x=5,y=80,width=225,height=72)
+        frm_plot_titulo.place(x=5,y=153,width=225,height=72)
         
         lbl_22 = Label(frm_plot_titulo, text=' Título do plot :')
         lbl_22.grid(row=0, column=0, padx= 3)
@@ -404,57 +413,73 @@ class main_window(Frame):
         
         #---Filtro no plot
         frm_plot_interpolacao = Labelframe(frm_plot, text='Filtro')
-        frm_plot_interpolacao.place(x=5,y=155,width=225,height=49)
+        frm_plot_interpolacao.place(x=5,y=230,width=225,height=49)
         
         lbl_24 = Label(frm_plot_interpolacao, text=' Interpolação :')
         lbl_24.grid(row=0, column=0, padx= 3)
         
         self.cmb_plot_interpolacao = Combobox(frm_plot_interpolacao, width=17)#janela de escolha interpolacao
         self.cmb_plot_interpolacao.grid(row=0, column=1, padx= 3)
-        self.cmb_plot_interpolacao['values'] = ['none','spline16','catrom','gaussian','senc']
+        self.cmb_plot_interpolacao['values'] = ['none','spline16','catrom','gaussian','sinc']
         self.cmb_plot_interpolacao.current(3)
         
         #---Habilitar grid
         frm_plot_grid = Labelframe(frm_plot, text='Grade')
-        frm_plot_grid.place(x=5,y=207,width=107,height=67)
+        frm_plot_grid.place(x=5,y=281,width=107,height=67)
         
-        self.flag_grid=True
-        self.btn_plt_grid = Button(frm_plot_grid, text='      Grade\nHABILITADO')
-        self.btn_plt_grid.place(x=5,y=1,width=93,height=40)
-        #self.btn_plt_grid['command'] = self.
+        self.btn_plt_grade = Button(frm_plot_grid, text='      Grade\nHABILITADO')
+        self.btn_plt_grade.place(x=5,y=1,width=93,height=40)
+        self.btn_plt_grade['command'] = self.plot_grade
         
         #---Habilitar label
         frm_plot_grid = Labelframe(frm_plot, text='Anotação eixos')
-        frm_plot_grid.place(x=123,y=207,width=107,height=67)
+        frm_plot_grid.place(x=123,y=281,width=107,height=67)
         
-        self.flag_label=True
-        self.btn_plt_label = Button(frm_plot_grid, text='   Anotação\nHABILITADO')
-        self.btn_plt_label.place(x=5,y=1,width=93,height=40)
-        #self.btn_plt_label['command'] = self.
+        self.btn_plt_anotacao = Button(frm_plot_grid, text='   Anotação\nHABILITADO')
+        self.btn_plt_anotacao.place(x=5,y=1,width=93,height=40)
+        self.btn_plt_anotacao['command'] = self.plot_anotacao
         
         
         #---Qual dado ser plotado
-        frm_plot_titulo = Labelframe(frm_plot, text='Dado plot')
-        frm_plot_titulo.place(x=5,y=283,width=225,height=190)
+        frm_plot_dado = Labelframe(frm_plot, text='Dado plot')
+        frm_plot_dado.place(x=5,y=350,width=225,height=200)
         
         #----Botões de escolha de dados
-        lbl_23 = Label(frm_plot_titulo, text='Escolha qual dos dados :')
+        lbl_23 = Label(frm_plot_dado, text='Escolha qual dos dados :')
         lbl_23.place(x=5,y=1,width=200,height=20)
         
-        btn_plt_dado_atual = Button(frm_plot_titulo, text='Dados da medida\n         ATUAL')
+        btn_plt_dado_atual = Button(frm_plot_dado, text='Dados da medida\n         ATUAL')
         btn_plt_dado_atual.place(x=5,y=25,width=210,height=40)
-        #btn_plt_dado_atual['command'] = self.
+        btn_plt_dado_atual['command'] = self.plot_dadoatual
         
-        lbl_23 = Label(frm_plot_titulo, text='OU')
-        lbl_23.place(x=97,y=70,width=20,height=20)
+        lbl_23 = Label(frm_plot_dado, text='OU')
+        lbl_23.place(x=97,y=67,width=20,height=16)
         
-        btn_plt_dado_arquivo = Button(frm_plot_titulo, text='Dados do arquivo\n           CSV')
-        btn_plt_dado_arquivo.place(x=5,y=94,width=210,height=40)
-        #btn_plt_dado_arquivo['command'] = self.
+        lbl_24 = Labelframe(frm_plot_dado)
+        lbl_24.place(x=5,y=81,width=210,height=92)
         
-        #---apresentação de alguns valores
-        frm_plot_teste = Labelframe(frm_plot, text='futura aba')
-        frm_plot_teste.place(x=5,y=476,width=225,height=180)
+        btn_plt_dado_arquivo = Button(lbl_24, text='Dados do arquivo\n           CSV')
+        btn_plt_dado_arquivo.place(x=5,y=1,width=195,height=40)
+        btn_plt_dado_arquivo['command'] = self.plot_arquivo_csv
+        
+        lbl_25 = Label(lbl_24, text='Tamanho(cm) X:')
+        lbl_25.place(x=5,y=45,width=90,height=20)
+        self.var_plot_tamanho_x=Entry(lbl_24, width=80)
+        self.var_plot_tamanho_x.insert(END, 12)
+        self.var_plot_tamanho_x.place(x=98,y=45,width=40,height=20)
+        
+        lbl_26 = Label(lbl_24, text='Y:')
+        lbl_26.place(x=143,y=45,width=30,height=20)
+        self.var_plot_tamanho_y=Entry(lbl_24, width=80)
+        self.var_plot_tamanho_y.insert(END, 12)
+        self.var_plot_tamanho_y.place(x=159,y=45,width=40,height=20)
+        
+        btn_plt_salvar = Button(frm_plot, text=' Salvar último\nMapa de Calor')
+        btn_plt_salvar.place(x=5,y=555,width=225,height=40)
+        btn_plt_salvar['command'] = self.plot_salva
+        
+        btn_plt_espelhar = Button(frm_plot, text=' Futuro botão que habilita\n espelhamento em ambos eixos')
+        btn_plt_espelhar.place(x=5,y=600,width=225,height=40)
         
         #--Apresentação do mapa de calor
         self.frm_heatmap = Labelframe(self.frm_notebook2, text='Mapa de calor')
@@ -463,7 +488,6 @@ class main_window(Frame):
         #Constantes e inicializações
         self.lista_serial()
         self.att_matriz()
-        self.teste()
         
     #Função para atualizar lista das portas COM
     def lista_serial(self):        
@@ -534,18 +558,30 @@ class main_window(Frame):
     #Função se string contem somente numero e maior que zero     
     def verifica_string(self, string, mensagem):
         #Caso string contem somente numero
-        if not(string.isdigit() and string.isdigit()):
+        if not(string.isdigit()):
             messagebox.showwarning(title=('Erro nos valores de '+mensagem),
                                    message=('O valor '+mensagem+' deve ser um numero decimal maior que zero'))
             return True
         
-        if(int(string)==0 or int(string)==0):
+        if(int(string)==0):
             messagebox.showwarning(title=('Erro nos valores de '+mensagem),
                                    message=('O valor '+mensagem+' deve ser um numero decimal maior que zero'))
             return True
         else:
             return False
         
+    #Verifica se string é um numero decimal     
+    def verifica_numero(self, string, mensagem):
+        #Caso numero comece com sinal negativo
+        if(string[0]=='-'):
+            string=string.replace('-','0',1)
+        if not(string.isdigit()):#verifica se é somente digito
+            messagebox.showwarning(title=('Erro nos valores de '+mensagem),
+                                   message=('O valor '+mensagem+' deve ser um numero decimal'))
+            return True
+        return False
+       
+    
     #Função de definição de ponto 1
     def start_point(self):
         if (self.verifica_medicao()):
@@ -683,9 +719,7 @@ class main_window(Frame):
         self.canvas.configure(scrollregion=bbox, width=dw, height=dh)
         
         #//////////////////////////////////////////////////////////////////////////////////
-        
-        
-        
+                
         self.cols=int(valor_x)
         self.rows=int(valor_y)
         self.atualiza_passo()
@@ -753,7 +787,7 @@ class main_window(Frame):
         print('SYST:MODE RMOD')#Ativa modo reciver
         print("RMOD:FREQ {}.format("+ str(freq) +")")#Define frequencia do modo reciver
         
-    #função de medição
+    #Função de medição
     def measurement(self):
         if (self.verifica_medicao()):
             return
@@ -793,7 +827,7 @@ class main_window(Frame):
             self.meas_movimento_cnc(direcao, abs(y))
             time.sleep(4) #colocar delay
         
-        self.matrix_meas = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.matrix_meas = [[-80 for _ in range(self.cols)] for _ in range(self.rows)]
         
         var_progressbar=0
         self.var_pb.set(var_progressbar)
@@ -805,7 +839,7 @@ class main_window(Frame):
                 for j in range(0, self.cols):#coluna
                     if(self.flag_stop):
                         return
-                    self.matrix_meas[i][j]=99# entra valor medido
+                    self.matrix_meas[i][j]=-40# entra valor medido
                     self.button_matriz[i][j].config(text="meas+\nx=%d\ny=%d" % (j+1, i+1))
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
@@ -819,7 +853,7 @@ class main_window(Frame):
                 for j in reversed(range(0,self.cols)):#coluna
                     if(self.flag_stop):
                         return
-                    self.matrix_meas[i][j]=98# entra valor medido
+                    self.matrix_meas[i][j]=4# entra valor medido
                     self.button_matriz[i][j].config(text="meas-\nx=%d\ny=%d" % (j+1, i+1))
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
@@ -853,71 +887,185 @@ class main_window(Frame):
         except AttributeError:
             messagebox.showwarning(title="Erro!!!Medida não realizada", message="Nenhuma informação para salvar ")
     
-    def teste(self):
-        data=[]
-        with open('data3.csv', 'r') as file:
-            reader = csv.reader(file, delimiter = ';', quoting=csv.QUOTE_NONNUMERIC)
-            for row in reader: # each row is a list
-                data.append(row)
+    #Função de alteração da flag de plot da grade
+    def plot_grade(self):
+        if(self.flag_grade):
+            self.btn_plt_grade.config(text='        Grade\nDESABILITADO')
+            self.flag_grade=False
+        else:
+            self.btn_plt_grade.config(text='      Grade\nHABILITADO')
+            self.flag_grade=True
+    
+    #Função de alteração da flag de plot das anotações nos eixos
+    def plot_anotacao(self):     
+        if(self.flag_anotacao):
+            self.btn_plt_anotacao.config(text='     Anotação\nDESABILITADO')
+            self.flag_anotacao=False
+        else:
+            self.btn_plt_anotacao.config(text='   Anotação\nHABILITADO')
+            self.flag_anotacao=True
+            
+    #Função de alteração da flag de plot das anotações nos eixos
+    def plot_auto_maxmin(self):     
+        if(self.flag_auto_maxmin):
+            self.btn_plt_maxmin.config(text='MAX/MIN automático DESABILITADO')
+            self.flag_auto_maxmin=False
+        else:
+            self.btn_plt_maxmin.config(text='MAX/MIN automático HABILITADO')
+            self.flag_auto_maxmin=True
+            
+    #Função de apresentação do mapa de calor para o dado medida realizada
+    def plot_dadoatual(self):
+        if not(self.flag_auto_maxmin):
+            if(self.verifica_numero(self.var_plot_max.get(), 'MAX e MIN do plot')):
+                return
+            if(self.verifica_numero(self.var_plot_min.get(), 'MAX e MIN do plot')):
+                return
+        try:
+            data=self.matrix_meas
+        except:
+            #erro no dado atual
+            return
         
-        self.mapa_de_calor_cleisson(data, max(max(data)), min(min(data)), 1, 0.5, False)
+        if(self.flag_auto_maxmin):
+            vmax=max(max(data))
+            vmin=min(min(data))
+        else:
+            vmax=int(self.var_plot_max.get())#função que verifica se é numero
+            vmin=int(self.var_plot_min.get())#função que veririca se é numero
+        step=[self.var_step_x, self.var_step_y]
+        escolhas=[self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
+                  self.cmb_plot_interpolacao.get()]
+        flag=[self.flag_anotacao, self.flag_grade, False]
+        destino_save=None
+    
+        self.mapa_de_calor(data, vmax, vmin, step, flag, escolhas, destino_save)
         
-    def mapa_de_calor_cleisson(self, data, vmax, vmin, step_x, step_y, flag_save):
+    def plot_arquivo_csv(self):
+        if not (self.flag_auto_maxmin):
+            if(self.verifica_numero(self.var_plot_max.get(), 'MAX e MIN do plot')):
+                return
+            if(self.verifica_numero(self.var_plot_min.get(), 'MAX e MIN do plot')):
+                return
+        if(self.verifica_string(self.var_plot_tamanho_x.get(), 'Tamanho da placa')):
+            return
+        if(self.verifica_string(self.var_plot_tamanho_y.get(), 'Tamanho da placa')):
+            return
+        try:
+            data_caminho = filedialog.askopenfilename(initialdir = "/",
+                                                      title = "Selecione arquivo com extensão CSV",
+                                                      filetypes = (("Arquivo Csv","*.csv*"),
+                                                                   ("all files","*.*")))
+            data=[]
+            with open(data_caminho, 'r') as file:
+                reader = csv.reader(file, delimiter = ';', quoting=csv.QUOTE_NONNUMERIC)
+                for row in reader: # each row is a list
+                    data.append(row)
+        except:
+            return
+        if(len(data)<1)or(len(data[0])<1):
+            #acusa erro de arquivo csv com problema na linha ou coluna
+            return
+        
+        if(self.flag_auto_maxmin):
+            vmax=max(max(data))
+            vmin=min(min(data))
+        else:
+            vmax=int(self.var_plot_max.get())#função que verifica se é numero
+            vmin=int(self.var_plot_min.get())#função que veririca se é numero
+        step=[1,1]
+        step[0]=float(self.var_plot_tamanho_x.get())/(len(data[0])-1)
+        step[1]=float(self.var_plot_tamanho_y.get())/(len(data)-1)
+        
+        escolhas=[self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
+                  self.cmb_plot_interpolacao.get()]
+        flag=[self.flag_anotacao, self.flag_grade, False]
+        destino_save=None
+        
+        self.mapa_de_calor(data, vmax, vmin, step, flag, escolhas, destino_save)
+    
+    def plot_salva(self):
+        files = [('Portable Graphics Format(PNG)', '*.png'),
+                 ('All Files', '*.*')] 
+        destino= filedialog.asksaveasfilename(filetypes = files, defaultextension = ".png")
+        
+        plt.savefig(destino,bbox_inches="tight")
+    
+    def mapa_de_calor(self, data, vmax, vmin, step, flag, escolhas, destino_save):
+        #flag[0] habilitação da anotação
+        #flag[1] habilitação da grade
+        #flag[2] escolha entre apresentação ou salvar
+        #step[0] passo x
+        #step[1] passo y
+        #escolhas[0] cor do mapa de calor
+        #escolhas[1] titulo do mapa de calor
+        #escolhas[2] interpolação do mapa de calor
+        
+        try:
+            self.canvas2.destroy()
+            plt.close('all')
+        except:
+            pass
+        
         #Gera figura de plotagem 
         fig, ax = plt.subplots()
         
-        interpolacao='gaussian'
-        cmap='inferno'
+        #cor cinza de background
+        if not(flag[2]):
+            fig.patch.set_facecolor('#F0F0F0')
+        
         #Gera mapa de calor
-        im = ax.imshow(data, interpolation=interpolacao, cmap=cmap, vmax=vmax, vmin=vmin)
+        im = ax.imshow(data, interpolation=escolhas[2], cmap=escolhas[0], vmax=vmax, vmin=vmin)
 
         #Cria anotação do grid
         anotacao_y = []
         for i in range (len(data)):
-            anotacao_y.append('%.2fcm' % float(i*step_y))
+            anotacao_y.append('%.2fcm' % float(i*step[1]))
             
         anotacao_x=[]
         for i in range (len(data[0])):
-            anotacao_x.append('%.2fcm' % float(i*step_x))
+            anotacao_x.append('%.2fcm' % float(i*step[0]))
             
         #Configuração de apresentação das anotações
-        ax.set_xticks(np.arange(len(anotacao_x)))
-        ax.set_yticks(np.arange(len(anotacao_y)))
-        ax.set_xticklabels(anotacao_x)
-        ax.set_yticklabels(anotacao_y)
-        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                 rotation_mode="anchor")
+        if(flag[0]):
+            ax.set_xticks(np.arange(len(anotacao_x)))
+            ax.set_yticks(np.arange(len(anotacao_y)))
+            ax.set_xticklabels(anotacao_x)
+            ax.set_yticklabels(anotacao_y)
+            plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                     rotation_mode="anchor")
 
         #Titulo do mapa de calor
-        ax.set_title('cleisson - ')
+        ax.set_title(escolhas[1])
 
         #Adiciona barra de cor
-        plt.colorbar(im, shrink=0.8)
+        if(len(data)>len(data[0])):
+            plt.colorbar(im, shrink=1)
+        else:
+            plt.colorbar(im, shrink=0.8)
         
         #Tamanho do mapa de calor
         plt.xlim(right=len(data[0])-0.5)
         plt.xlim(left=-0.5)
         plt.ylim(top=-0.5)
         plt.ylim(bottom=len(data)-0.5)
-        plt.grid(color='w', which='major', alpha=0.5)
         
-        if (flag_save):
-            #Salva imagem
-            plt.savefig('_img_1.png',bbox_inches="tight")
-        else:   
-            #Plot imagem
-            canvas = FigureCanvasTkAgg(fig, master = self.frm_heatmap)
-            canvas.draw()
-            if(len(data)>=len(data[0])):
-                canvas.get_tk_widget().place(x=5,y=5,height=650)
-            else:
-                canvas.get_tk_widget().place(x=5,y=5,width=790)
+        #Grade
+        if(flag[1]):
+            plt.grid(color='w', which='major', alpha=0.5)
+        
+        self.canvas2 = FigureCanvasTkAgg(fig, master = self.frm_heatmap)
+        self.canvas2.draw()
+        if(len(data)>=len(data[0])):
+            self.canvas2.get_tk_widget().place(x=5,y=5,height=650)
+        else:
+            self.canvas2.get_tk_widget().place(x=5,y=5,width=790)
     
 def main():
     #---Gera janela-----------------------
     root = Tk()
     root.geometry('1080x720')
-    root.resizable(0, 0) 
+    root.resizable(0, 0)
     #---icone da janela-------------------
     try:
         icone = PhotoImage(file = 'labcem_icone.png') 
