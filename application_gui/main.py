@@ -16,7 +16,9 @@ import serial.tools.list_ports   #Bibliote de conecção serial
 import time                      #Biblioteca para delay
 import csv                       #Biblioteca salvar dados em arquivo csv
 import numpy as np               #Biblioteca de array FUTURO RETIRAR
+#from ctypes import windll
 from datetime import datetime    #Biblioteca do tempo da maquina
+
 
 #Escrita e Leitura serial com grbl
 from cnc_controle import controle_cnc
@@ -48,10 +50,14 @@ class main_window(Frame):
         #-Altera tema da janela
         #style = ThemedStyle(self)
         #style.set_theme("black")
-        
         #style=Style()
         #print(style.theme_names())
         #style.theme_use("black")
+        
+        #-Altera todas as fontes
+        #def_font = font.nametofont("TkDefaultFont")
+        #def_font.config(size=6)
+        
         
         #---nome da janela---------------------
         self.master.title('Controle Auto Scan')#futuro nome?
@@ -374,16 +380,16 @@ class main_window(Frame):
         frm_plot_maxmin.place(x=5,y=0,width=212,height=47)
         
         lbl_21 = Label(frm_plot_maxmin, text='MAX. :')
-        lbl_21.grid(row=0, column=0, padx= 3)
+        lbl_21.place(x=5,y=5,width=60,height=20)
         self.var_plot_max=Entry(frm_plot_maxmin, width=8)
         self.var_plot_max.insert(END, '%d' % 10)
-        self.var_plot_max.grid(row=0, column=1, padx= 3)
+        self.var_plot_max.place(x=45,y=3,width=57,height=20)
         
         lbl_22 = Label(frm_plot_maxmin, text='MIN. :')
-        lbl_22.grid(row=0, column=2, padx= 3)
+        lbl_22.place(x=110,y=5,width=60,height=20)
         self.var_plot_min=Entry(frm_plot_maxmin, width=8)
         self.var_plot_min.insert(END, '%d' % -80)
-        self.var_plot_min.grid(row=0, column=3, padx= 3)
+        self.var_plot_min.place(x=145,y=3,width=57,height=20)
         
         lbl_ou = Label(frm_plot_parametro, text=' OU')
         lbl_ou.place(x=95,y=47,width=30,height=15)
@@ -416,10 +422,10 @@ class main_window(Frame):
         frm_plot_interpolacao.place(x=5,y=230,width=225,height=49)
         
         lbl_24 = Label(frm_plot_interpolacao, text=' Interpolação :')
-        lbl_24.grid(row=0, column=0, padx= 3)
+        lbl_24.place(x=5,y=5,width=78,height=20)
         
         self.cmb_plot_interpolacao = Combobox(frm_plot_interpolacao, width=17)#janela de escolha interpolacao
-        self.cmb_plot_interpolacao.grid(row=0, column=1, padx= 3)
+        self.cmb_plot_interpolacao.place(x=90,y=2,width=125,height=23)
         self.cmb_plot_interpolacao['values'] = ['none','spline16','catrom','gaussian','sinc']
         self.cmb_plot_interpolacao.current(3)
         
@@ -463,10 +469,10 @@ class main_window(Frame):
         btn_plt_dado_arquivo['command'] = self.plot_arquivo_csv
         
         lbl_25 = Label(lbl_24, text='Tamanho(cm) X:')
-        lbl_25.place(x=5,y=45,width=90,height=20)
+        lbl_25.place(x=5,y=45,width=91,height=20)
         self.var_plot_tamanho_x=Entry(lbl_24, width=80)
         self.var_plot_tamanho_x.insert(END, 12)
-        self.var_plot_tamanho_x.place(x=98,y=45,width=40,height=20)
+        self.var_plot_tamanho_x.place(x=99,y=45,width=40,height=20)
         
         lbl_26 = Label(lbl_24, text='Y:')
         lbl_26.place(x=143,y=45,width=30,height=20)
@@ -1066,6 +1072,8 @@ def main():
     root = Tk()
     root.geometry('1080x720')
     root.resizable(0, 0)
+    root.call('tk', 'scaling', 1.3)          #define escala (funciona porém quando fica muito alta continua problema
+    #windll.shcore.SetProcessDpiAwareness(1) #altera dpi do sistema operacional (não funciona)
     #---icone da janela-------------------
     try:
         icone = PhotoImage(file = 'labcem_icone.png') 
