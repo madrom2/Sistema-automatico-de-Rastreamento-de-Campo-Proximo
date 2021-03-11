@@ -55,8 +55,8 @@ class main_window(Frame):
         #style.theme_use("black")
         
         #-Altera todas as fontes
-        #def_font = font.nametofont("TkDefaultFont")
-        #def_font.config(size=6)
+        def_font = font.nametofont("TkDefaultFont")
+        def_font.config(size=9)
         
         
         #---nome da janela---------------------
