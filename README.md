@@ -3,7 +3,7 @@ Repositório de backup dos **modelos 3d desenvolvidos** e do código em **python
 ****
 #### Estrutura de atuação
 A estrutura de atuação desenvolvida no software "fusion360", para levantamento de componentes e visualização do produto final.
-![N|Solid](/IMG/IMG1.png)
+![N|Solid](/images/IMG1.png)
 
 Para lista de componentes clique [AQUI](https://docs.google.com/document/d/15HYgylcvzmUAGObxVd7cbkju6tUG08WlYevftHTd1gw/edit?usp=sharing) .
 
@@ -11,9 +11,9 @@ O controle de atuação será feito com [CNC Shield V3 para Arduino Uno](https:/
 ****
 #### Código
 O código está sendo desenvolvido na liguagem de programação **Python 3.3**.
-![N|Solid](/IMG/IMG2.png)
+![N|Solid](/images/IMG2.png)
 
-![N|Solid](/IMG/IMG6.png)
+![N|Solid](/images/IMG6.png)
 
 Com as seguintes bibliotecas:
 - Tkinter : Interface gráfica;
@@ -40,11 +40,13 @@ Recursos essênciais:
 - [x] Barra de progresso da medição
 - [ ] Botão e comando para "Home"
 - [x] Escolha de ponto para remedir
+- [x] Interação com código de plotagem
 
 Após terminar os recursos essênciais:
-- [x] Divisão em classes de interface, CNC e istrumento
+- [ ] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
-- [ ] Interação com código de plotagem
+- [ ] Janela expansível
+
 
 Possíveis recursos adicionais:
 - Modo noturno
