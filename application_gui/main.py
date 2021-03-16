@@ -58,7 +58,6 @@ class main_window(Frame):
         def_font = font.nametofont("TkDefaultFont")
         def_font.config(size=9)
         
-        
         #---nome da janela---------------------
         self.master.title('Controle Auto Scan')#futuro nome?
         self.pack(fill=BOTH, expand=True)
@@ -86,29 +85,28 @@ class main_window(Frame):
         
         #---configuração linha analisador-----
         lbl_01 = Label(frm_01, text='Analisador:')
-        lbl_01.grid(row=0, column=0, padx= 3)
+        lbl_01.place(x=5,y=3,width=90,height=20)
         
-        self.cmb_analyzer = Combobox(frm_01, width=27)
-        self.cmb_analyzer.grid(row=0, column=1, padx= 3)
+        self.cmb_analyzer = Combobox(frm_01)
+        self.cmb_analyzer.place(x=73,y=2,width=185,height=23)
         
         btn_open_analyzer = Button(frm_01, text='Abrir')
-        btn_open_analyzer.grid(row=0, column=2, padx= 3)
+        btn_open_analyzer.place(x=267,y=1,width=80,height=25)
         
         #---Atualização de ports-----------
         btn_refresh = Button(frm_01, text='Atualizar')
-        
         btn_refresh.place(x=353,y=1,width=75,height=53)
         btn_refresh['command'] = self.lista_serial
         
         #---configuração linha CNC---------      
         lbl_02 = Label(frm_01, text='CNC:')
-        lbl_02.grid(row=1, column=0, padx= 3)
+        lbl_02.place(x=5,y=30,width=90,height=20)
 
         self.cmb_cnc = Combobox(frm_01, width=27)
-        self.cmb_cnc.grid(row=1, column=1, padx= 3)
+        self.cmb_cnc.place(x=73,y=29,width=185,height=23)
         
         self.btn_open_cnc = Button(frm_01, text='Abrir')
-        self.btn_open_cnc.grid(row=1, column=2, padx= 3)
+        self.btn_open_cnc.place(x=267,y=28,width=80,height=25)
         self.btn_open_cnc['command'] = self.abrir_serial_cnc
         
         #---nome do frame---------------------
@@ -334,19 +332,19 @@ class main_window(Frame):
         
         #---valores da matriz-----------------
         lbl_08 = Label(frm_freq, text='Frequência:')
-        lbl_08.grid(row=0, column=0)
+        lbl_08.place(x=5,y=3,width=90,height=20)
         
-        self.var_freq=Entry(frm_freq, width=12)
+        self.var_freq=Entry(frm_freq)
         self.var_freq.insert(END, '%d' % 300)
-        self.var_freq.grid(row=0, column=1)
+        self.var_freq.place(x=73,y=3,width=63,height=20)
         
-        self.cmb_freq = Combobox(frm_freq, width=5)
-        self.cmb_freq.grid(row=0, column=2)
+        self.cmb_freq = Combobox(frm_freq)
+        self.cmb_freq.place(x=143,y=3,width=60,height=20)
         self.cmb_freq['values'] = ['GHz','MHz','KHz']
         self.cmb_freq.current(1)
         
         self.btn_freq_refresh = Button(frm_freq, text='Atualizar')
-        self.btn_freq_refresh.place(x=68,y=25,width=136,height=25)
+        self.btn_freq_refresh.place(x=72,y=27,width=132,height=25)
         self.btn_freq_refresh['command'] = self.att_freq
         
         #-Botões de atuação medição
@@ -1066,12 +1064,26 @@ class main_window(Frame):
             self.canvas2.get_tk_widget().place(x=5,y=5,height=650)
         else:
             self.canvas2.get_tk_widget().place(x=5,y=5,width=790)
-    
+
+def resize(event):
+    print("Novo tamanho é: {}x{}".format(event.width, event.height))
+
 def main():
     #---Gera janela-----------------------
     root = Tk()
     root.geometry('1080x720')
-    root.resizable(0, 0)
+    
+    #retorna tamanho da janela
+    root.bind("<Configure>", resize)
+    
+    #maximiza a janela
+    #root.state('zoomed')
+    
+    #janela modo tela cheia
+    #root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
+    
+    #desabilita resize
+    #root.resizable(0, 0)
     root.call('tk', 'scaling', 1.3)          #define escala (funciona porém quando fica muito alta continua problema
     #windll.shcore.SetProcessDpiAwareness(1) #altera dpi do sistema operacional (não funciona)
     #---icone da janela-------------------
