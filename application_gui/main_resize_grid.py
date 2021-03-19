@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
+from tkinter import font
 
 #Biblioteca do mapa de calor
 import matplotlib
@@ -48,7 +49,9 @@ class main_window(Frame):
     def initUI(self):
         """Configuração da escala e tamanho"""
         self.master.call('tk', 'scaling', 1.3)
-        self.master.state('zoomed')
+        # Parâmetro zoomed não funcionou: _tkinter.TclError: bad argument "zoomed": must be normal, iconic, or withdrawn
+        # self.master.state('zoomed')
+        self.master.state('normal')
         
         self.s_w= self.winfo_screenwidth()/self.n_w
         self.s_h= self.winfo_screenheight()/self.n_h
