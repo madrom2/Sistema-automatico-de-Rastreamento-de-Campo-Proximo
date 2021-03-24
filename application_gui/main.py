@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
+from tkinter import font
 #from ttkthemes import ThemedStyle
 
 #Biblioteca do mapa de calor
@@ -16,7 +17,6 @@ import serial.tools.list_ports   #Bibliote de conecção serial
 import time                      #Biblioteca para delay
 import csv                       #Biblioteca salvar dados em arquivo csv
 import numpy as np               #Biblioteca de array FUTURO RETIRAR
-#from ctypes import windll
 from datetime import datetime    #Biblioteca do tempo da maquina
 
 
@@ -138,7 +138,7 @@ class main_window(Frame):
         lbl_05.grid(row=0, column=4)
         
         #---botão de home------------------
-        btn_home = btn_up = Button(frm_ctrls, text= 'Origem')
+        btn_home = Button(frm_ctrls, text= 'Origem')
         btn_home.place(x=343,y=23,width=70,height=83)
         
         #---configuração linhas------------   
@@ -171,17 +171,17 @@ class main_window(Frame):
         
         # Terceira linha       
         btn_diag_so = Button(frm_ctrls, text=u'\u25FA')
-        btn_diag_so.grid(row=3, column=1)
+        btn_diag_so.place(x=27,y=81,width=75,height=26)
         
         btn_down = Button(frm_ctrls, text=u'\u25BC')
-        btn_down.grid(row=3, column=2)
+        btn_down.place(x=106,y=81,width=75,height=26)
         btn_down['command'] = lambda direcao=self.dict_jog['down'] : self.ctrl_movimento_cnc(direcao)
         
         btn_diag_se = Button(frm_ctrls, text=u'\u25FF')
-        btn_diag_se.grid(row=3, column=3)
+        btn_diag_se.place(x=185,y=81,width=75,height=26)
                 
         btn_z_down = Button(frm_ctrls, text=u'\u25BC')
-        btn_z_down.grid(row=3, column=4)
+        btn_z_down.place(x=264,y=81,width=75,height=26)
         btn_z_down['command'] = lambda direcao=self.dict_jog['z_down'] : self.ctrl_movimento_cnc(direcao)
 
         self.cmb_step = Combobox(frm_ctrls, width=5)# Janela de seleção do tamanho de passo
@@ -1064,7 +1064,15 @@ class main_window(Frame):
             self.canvas2.get_tk_widget().place(x=5,y=5,height=650)
         else:
             self.canvas2.get_tk_widget().place(x=5,y=5,width=790)
-
+            
+    def all_children (self, wid) :
+        widget_list = wid.winfo_children()
+        for item in widget_list :
+            if item.winfo_children() :
+                widget_list.extend(item.winfo_children())
+        for item in widget_list :
+            item.destroy()
+        
 def resize(event):
     print("Novo tamanho é: {}x{}".format(event.width, event.height))
 
@@ -1074,7 +1082,7 @@ def main():
     root.geometry('1080x720')
     
     #retorna tamanho da janela
-    root.bind("<Configure>", resize)
+    #root.bind("<Configure>", resize)
     
     #maximiza a janela
     #root.state('zoomed')

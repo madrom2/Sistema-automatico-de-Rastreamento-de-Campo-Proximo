@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
+from tkinter import font
 
 #Biblioteca do mapa de calor
 import matplotlib
