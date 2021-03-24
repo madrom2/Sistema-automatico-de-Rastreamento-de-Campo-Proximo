@@ -27,8 +27,8 @@ class main_window(Frame):
                 'z_down': '$J=G91 Z-% F200'}
     
     rows, cols = 13, 13  # tamanho da tabela
-    rows_disp = 10.35  # numero de linhas apresentado
-    cols_disp = 7.75 # numero de colunas apresentado
+    rows_disp = 13  # numero de linhas apresentado
+    cols_disp = 13 # numero de colunas apresentado
     var_step_x, var_step_y = 1, 1 # passo de cada eixo
     flag_medindo, flag_stop ,flag_resize= False, False, False
     flag_grade, flag_anotacao, flag_auto_maxmin= True, True, True
@@ -48,7 +48,13 @@ class main_window(Frame):
     def initUI(self):
         """Configuração da escala e tamanho"""
         self.master.call('tk', 'scaling', 1.3)
-        self.master.state('zoomed')
+        try:
+            self.master.state('zoomed')
+        except:
+            try:
+                self.master.attributes('-zoomed', True)
+            except:
+                self.master.wm_attributes('-zoomed', True)
         
         self.s_w= self.winfo_screenwidth()/self.n_w
         self.s_h= self.winfo_screenheight()/self.n_h
@@ -90,8 +96,8 @@ class main_window(Frame):
         self.frm_notebook1.rowconfigure( 4, weight=1)
         self.frm_notebook1.rowconfigure( 5, weight=1)
         self.frm_notebook1.columnconfigure( 0, weight=1)
-        self.frm_notebook1.columnconfigure( 1, weight=7, minsize=160)
-        self.frm_notebook1.columnconfigure( 2, weight=3, minsize=500)
+        self.frm_notebook1.columnconfigure( 1, weight=3, minsize=160)
+        self.frm_notebook1.columnconfigure( 2, weight=7, minsize=500)
         
         """Criando Labelframe Serial e seus widgets"""
         lblfrm = LabelFrame(self.frm_notebook1,text="Serial")
@@ -383,7 +389,7 @@ class main_window(Frame):
     
     def resize(self,event):
         cur_time = time.time()
-        if (cur_time - self.last_callback_time) > 0.30:
+        if (cur_time - self.last_callback_time) > 0.80:
             print(event.width, event.height)
             self.ajuste_fonte(event.height, event.width)
             
@@ -594,12 +600,12 @@ class main_window(Frame):
         
         # Cria scrollbar vertical e anexa a area de botões
         vsbar = Scrollbar(self.frame2, orient=VERTICAL, command=self.canvas.yview)
-        vsbar.grid(row=0, column=1, sticky=N+S)
+        vsbar.grid(row=0, column=1, sticky=N+S+E)
         self.canvas.configure(yscrollcommand=vsbar.set)
         
         # Cria scrollbar horizontal e anexa a area de botões
         hsbar = Scrollbar(self.frame2, orient=HORIZONTAL, command=self.canvas.xview)
-        hsbar.grid(row=1, column=0, sticky=E+W)
+        hsbar.grid(row=1, column=0, sticky=S+E+W)
         self.canvas.configure(xscrollcommand=hsbar.set)
 
         # Cria frame que contem os botões
