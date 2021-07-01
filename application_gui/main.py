@@ -1,3 +1,5 @@
+#ponto de zero
+
 #Biblioteca de interface
 from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
@@ -22,6 +24,7 @@ from datetime import datetime    #Biblioteca do tempo da maquina
 
 #Escrita e Leitura serial com grbl
 from cnc_controle import controle_cnc
+from analisador_controle import controle_analisador
 
 class main_window(Frame):
     dict_jog = {'up': '$J=G91 Y+% F200',\
@@ -45,7 +48,8 @@ class main_window(Frame):
         self.initUI()
         
         self.serial_cnc = None
-    
+        self.visa_analisador = None
+        
     def initUI(self):
         #-Altera tema da janela
         #style = ThemedStyle(self)
@@ -87,11 +91,12 @@ class main_window(Frame):
         lbl_01 = Label(frm_01, text='Analisador:')
         lbl_01.place(x=5,y=3,width=90,height=20)
         
-        self.cmb_analyzer = Combobox(frm_01)
-        self.cmb_analyzer.place(x=73,y=2,width=185,height=23)
+        self.cmb_analisador = Combobox(frm_01)
+        self.cmb_analisador.place(x=73,y=2,width=185,height=23)
         
-        btn_open_analyzer = Button(frm_01, text='Abrir')
-        btn_open_analyzer.place(x=267,y=1,width=80,height=25)
+        self.btn_open_analisador = Button(frm_01, text='Abrir')
+        self.btn_open_analisador.place(x=267,y=1,width=80,height=25)
+        self.btn_open_analisador['command'] = self.abrir_visa_analisador
         
         #---Atualização de ports-----------
         btn_refresh = Button(frm_01, text='Atualizar')
@@ -140,6 +145,7 @@ class main_window(Frame):
         #---botão de home------------------
         btn_home = Button(frm_ctrls, text= 'Origem')
         btn_home.place(x=343,y=23,width=70,height=83)
+        btn_home['command'] = self.vai_origem
         
         #---configuração linhas------------   
         # Primeira linha
@@ -358,7 +364,7 @@ class main_window(Frame):
         
         btn_start = Button(self.frm_notebook1, text='Iniciar Medição')
         btn_start.place(x=10,y=300,width=145,height=40)
-        btn_start['command'] = self.measurement
+        btn_start['command'] = self.medicao
         
         #-Notebook ed plotagem
         self.frm_notebook2 = Frame(notebook)
@@ -497,12 +503,29 @@ class main_window(Frame):
     def lista_serial(self):        
         portas=controle_cnc.list_serial()
         
-        self.cmb_analyzer['values'] = portas
-        self.cmb_analyzer.set('Escolha...')
+        self.cmb_analisador['values'] = portas
+        self.cmb_analisador.set('Escolha...')
         
         self.cmb_cnc['values'] = portas
         self.cmb_cnc.set('Escolha...')
+
+    #Função para iniciar comunicação com analisador
+    def abrir_visa_analisador(self):
+        if (self.verifica_medicao()):
+            return
+        com_port =  self.cmb_analisador.get()
+        self.visa_analisador=controle_analisador.open_visa_analisador(com_port, self.visa_analisador)
+        
+        if(self.visa_analisador==None):
+            self.btn_open_analisador['text'] = 'Abrir'
+        else:
+            self.btn_open_analisador['text'] = 'Fechar'
     
+    #Função leitura amplitude do analisador
+    def leitura_amplitude(self):
+        #futuro ... integração com o novo analisador
+        return controle_analisador.receiver_amplitude(self.visa_analisador)
+        
     #Função para abrir porta serial da CNC
     def abrir_serial_cnc(self):
         if (self.verifica_medicao()):
@@ -513,7 +536,6 @@ class main_window(Frame):
         if(self.serial_cnc==None):
             self.btn_open_cnc['text'] = 'Abrir'
         else:
-            #forçar conecção
             self.btn_open_cnc['text'] = 'Fechar'
     
     #Função de movimento através do botões de controle
@@ -708,7 +730,7 @@ class main_window(Frame):
             for j in range(0, int(valor_x)):
                 self.button_matriz[i][j] = Button(self.buttons_frame, text="m[%d,%d]\nx=%d\ny=%d" % (int(valor_x), int(valor_y),j+1,i+1))
                 self.button_matriz[i][j].grid(row=i, column=j)
-                self.button_matriz[i][j]['command'] = lambda var1=i, var2=j: self.meas_ponto(var1,var2)
+                self.button_matriz[i][j]['command'] = lambda var1=i, var2=j: self.medir_ponto(var1,var2)
         
         # Cria janela para os botões
         self.canvas.create_window((0,0), window=self.buttons_frame, anchor=NW)
@@ -729,7 +751,7 @@ class main_window(Frame):
         self.atualiza_passo()
     
     #Função de re medição de ponto
-    def meas_ponto(self,row,col):
+    def medir_ponto(self,row,col):
         if (self.verifica_medicao()):
             return
         
@@ -757,7 +779,7 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            time.sleep(4) #colocar delay
+            time.sleep(1) #colocar delay
             
         y=y+(self.var_step_y*row)-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
@@ -765,10 +787,13 @@ class main_window(Frame):
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            time.sleep(4) #colocar delay
+            time.sleep(1) #colocar delay
+        
+        self.matrix_meas[row][col]=self.leitura_amplitude()
+        self.button_matriz[row][col].config(text="\n"+matrix_meas[row][col]+" dBm\n")
         
         self.flag_medindo=False
-    
+        
     #Função comunicação com analisador para definição
     #frequencia de medição
     def att_freq(self):
@@ -792,7 +817,7 @@ class main_window(Frame):
         print("RMOD:FREQ {}.format("+ str(freq) +")")#Define frequencia do modo reciver
         
     #Função de medição
-    def measurement(self):
+    def medicao(self):
         if (self.verifica_medicao()):
             return
         #Verifica se ponto superior esquerdo foi definido e atribui a variaveis
@@ -821,7 +846,7 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            time.sleep(4) #colocar delay
+            time.sleep(1) #colocar delay
             
         y=y-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
@@ -829,7 +854,7 @@ class main_window(Frame):
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            time.sleep(4) #colocar delay
+            time.sleep(1) #colocar delay
         
         self.matrix_meas = [[-80 for _ in range(self.cols)] for _ in range(self.rows)]
         
@@ -843,12 +868,11 @@ class main_window(Frame):
                 for j in range(0, self.cols):#coluna
                     if(self.flag_stop):
                         return
-                    self.matrix_meas[i][j]=-40# entra valor medido
-                    self.button_matriz[i][j].config(text="meas+\nx=%d\ny=%d" % (j+1, i+1))
+                    self.matrix_meas[i][j]=self.leitura_amplitude()
+                    self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
-                    print("Mede")
                     if(j+1<self.cols):
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
@@ -857,12 +881,11 @@ class main_window(Frame):
                 for j in reversed(range(0,self.cols)):#coluna
                     if(self.flag_stop):
                         return
-                    self.matrix_meas[i][j]=4# entra valor medido
-                    self.button_matriz[i][j].config(text="meas-\nx=%d\ny=%d" % (j+1, i+1))
+                    self.matrix_meas[i][j]=self.leitura_amplitude()
+                    self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
-                    print ("Mede")
                     if(j!=0):
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_x)
@@ -891,6 +914,13 @@ class main_window(Frame):
         except AttributeError:
             messagebox.showwarning(title="Erro!!!Medida não realizada", message="Nenhuma informação para salvar ")
     
+    #Função de homing
+    def vai_origem(self):
+        if(self.verifica_medicao()):
+            return
+        controle_cnc.cnc_jog('$H',self.serial_cnc)
+        time.sleep(5)
+        
     #Função de alteração da flag de plot da grade
     def plot_grade(self):
         if(self.flag_grade):
