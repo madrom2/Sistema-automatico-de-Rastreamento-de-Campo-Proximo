@@ -520,6 +520,7 @@ class main_window(Frame):
             self.btn_open_analisador['text'] = 'Abrir'
         else:
             self.btn_open_analisador['text'] = 'Fechar'
+        self.att_freq()
     
     #Função leitura amplitude do analisador
     def leitura_amplitude(self):
@@ -637,11 +638,9 @@ class main_window(Frame):
         try:
             #Para o passo do eixo X
             self.var_step_x=abs(self.start_point_x-self.end_point_x)/(int(self.cols)-1)
-            print("xlinha="+str(self.var_step_x))
             self.lbl_par_7.config(text=(("%.4f" % (self.var_step_x)).replace('.',',')))
             #Para o passo do eixo Y
             self.var_step_y=abs(self.start_point_y-self.end_point_y)/(int(self.rows)-1)
-            print("ylinha="+str(self.var_step_y))
             self.lbl_par_8.config(text=(("%.4f" % (self.var_step_y)).replace('.',',')))
         except AttributeError:
             return
@@ -675,8 +674,7 @@ class main_window(Frame):
         valor_y = self.var_matriz_y.get()
         
         #tratamento do valor de entrada
-        if (self.verifica_string(valor_x, 'X e Y') or
-            self.verifica_string(valor_y, 'X e Y')):
+        if (self.verifica_string(valor_x, 'X e Y') or self.verifica_string(valor_y, 'X e Y')):
             return
         
         if(int(valor_x)==0 or int(valor_y)==0):
@@ -812,9 +810,7 @@ class main_window(Frame):
             freq=int(freq)*pow(10, 6)
         else:
             freq=int(freq)*pow(10, 9)
-        #AQUI entra Função que manda pro analisador
-        print('SYST:MODE RMOD')#Ativa modo reciver
-        print("RMOD:FREQ {}.format("+ str(freq) +")")#Define frequencia do modo reciver
+        controle_analisador.receiver_frequencia(self.visa_analisador,freq)
         
     #Função de medição
     def medicao(self):
@@ -869,11 +865,13 @@ class main_window(Frame):
                     if(self.flag_stop):
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
-                    self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
+                    print('mede:'+str(self.matrix_meas))
+                    self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
                     if(j+1<self.cols):
+                        print('move')
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
                 flag_ordem=False
@@ -882,18 +880,39 @@ class main_window(Frame):
                     if(self.flag_stop):
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
-                    self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
+                    print('mede:'+str(self.matrix_meas))
+                    self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
                     if(j!=0):
+                        print('move')
                         time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_x)
                 flag_ordem=True
             if(i+1<self.rows):
                 time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                 self.meas_movimento_cnc(self.dict_jog['down'], self.var_step_y)
-                
+        """
+        for i in range(0, self.rows):#linha
+            for j in range(0, self.cols):#coluna
+                if(self.flag_stop):
+                    return
+                self.matrix_meas[i][j]=self.leitura_amplitude()
+                self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
+                var_progressbar=var_progressbar+step_progressbar
+                self.var_pb.set(var_progressbar)
+                self.master.update()
+                if(j+1<self.cols):
+                    time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
+                    self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
+
+            if(i+1<self.rows):
+                time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
+                self.meas_movimento_cnc(self.dict_jog['down'], self.var_step_y)
+                time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
+                self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_y*(self.cols-1))
+        """
         self.flag_medindo=False
     
     #Função para salvar arquivo com extensão csv
