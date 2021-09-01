@@ -1,5 +1,3 @@
-#ponto de zero
-
 #Biblioteca de interface
 from tkinter import *
 from tkinter.ttk import * # Frame, Label, Entry, Button
@@ -23,8 +21,8 @@ from datetime import datetime    #Biblioteca do tempo da maquina
 
 
 #Escrita e Leitura serial com grbl
-from cnc_controle import controle_cnc
-from analisador_controle import controle_analisador
+#from cnc_controle import controle_cnc
+#from analisador_controle import controle_analisador
 
 class main_window(Frame):
     dict_jog = {'up': '$J=G91 Y+% F200',\
@@ -341,7 +339,7 @@ class main_window(Frame):
         lbl_08.place(x=5,y=3,width=90,height=20)
         
         self.var_freq=Entry(frm_freq)
-        self.var_freq.insert(END, '%d' % 300)
+        self.var_freq.insert(END, '%d' % 25)
         self.var_freq.place(x=73,y=3,width=63,height=20)
         
         self.cmb_freq = Combobox(frm_freq)
@@ -538,7 +536,7 @@ class main_window(Frame):
             self.btn_open_cnc['text'] = 'Abrir'
         else:
             self.btn_open_cnc['text'] = 'Fechar'
-    
+            
     #Função de movimento através do botões de controle
     def ctrl_movimento_cnc(self, direcao):
         if (self.serial_cnc != None):
@@ -777,18 +775,20 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            time.sleep(1) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                time.sleep(0.125)
             
-        y=y+(self.var_step_y*row)-float(xyz[1])
+        y=y-(self.var_step_y*row)-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
             print("movimento y="+str(y))
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            time.sleep(1) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                time.sleep(0.125)
         
         self.matrix_meas[row][col]=self.leitura_amplitude()
-        self.button_matriz[row][col].config(text="\n"+matrix_meas[row][col]+" dBm\n")
+        self.button_matriz[row][col].config(text="\n"+str(self.matrix_meas[row][col])+" dBm\n")
         
         self.flag_medindo=False
         
@@ -842,7 +842,8 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            time.sleep(1) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                time.sleep(0.125)
             
         y=y-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
@@ -850,7 +851,8 @@ class main_window(Frame):
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            time.sleep(1) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                time.sleep(0.125)
         
         self.matrix_meas = [[-80 for _ in range(self.cols)] for _ in range(self.rows)]
         
@@ -865,54 +867,37 @@ class main_window(Frame):
                     if(self.flag_stop):
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
-                    print('mede:'+str(self.matrix_meas))
                     self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
                     if(j+1<self.cols):
-                        print('move')
-                        time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
+                        while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                            time.sleep(0.125)
+                        #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                 flag_ordem=False
             else:
                 for j in reversed(range(0,self.cols)):#coluna
                     if(self.flag_stop):
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
-                    print('mede:'+str(self.matrix_meas))
                     self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
                     self.master.update()
                     if(j!=0):
-                        print('move')
-                        time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                         self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_x)
+                        while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                            time.sleep(0.125)
+                        #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                 flag_ordem=True
             if(i+1<self.rows):
-                time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                 self.meas_movimento_cnc(self.dict_jog['down'], self.var_step_y)
-        """
-        for i in range(0, self.rows):#linha
-            for j in range(0, self.cols):#coluna
-                if(self.flag_stop):
-                    return
-                self.matrix_meas[i][j]=self.leitura_amplitude()
-                self.button_matriz[i][j].config(text="\n"+matrix_meas[i][j]+" dBm\n")
-                var_progressbar=var_progressbar+step_progressbar
-                self.var_pb.set(var_progressbar)
-                self.master.update()
-                if(j+1<self.cols):
-                    time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                    self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
-
-            if(i+1<self.rows):
-                time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                self.meas_movimento_cnc(self.dict_jog['down'], self.var_step_y)
-                time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
-                self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_y*(self.cols-1))
-        """
+                while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                    time.sleep(0.125)
+                #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
+       
         self.flag_medindo=False
     
     #Função para salvar arquivo com extensão csv
@@ -939,6 +924,8 @@ class main_window(Frame):
             return
         controle_cnc.cnc_jog('$H',self.serial_cnc)
         time.sleep(5)
+        while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+            time.sleep(0.05)
         
     #Função de alteração da flag de plot da grade
     def plot_grade(self):
