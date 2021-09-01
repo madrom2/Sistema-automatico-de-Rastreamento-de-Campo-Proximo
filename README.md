@@ -27,9 +27,9 @@ Com as seguintes bibliotecas:
 #### Lista de controle 
 Recursos essênciais:
 - [x] Comunicação serial com GRBL1.1
-- [ ] Comunicação analisador de espectro HAMEG HMS-X
+- [x] Comunicação analisador de espectro HAMEG HMS-X
 - [x] Geração e atualização da matriz
-- [ ] Definição e comunição da frequência de medição
+- [x] Definição e comunição da frequência de medição
 - [x] Comando do botão de "Parar Medição"
 - [ ] Comando do botão de "Pausar Medição"
 - [x] Espaço de apresentação de parametros
@@ -38,14 +38,14 @@ Recursos essênciais:
 - [x] Recurso para salvar arquivo
 - [ ] Tempo estimado da medição
 - [x] Barra de progresso da medição
-- [ ] Botão e comando para "Home"
+- [x] Botão e comando para "Home"
 - [x] Escolha de ponto para remedir
 - [x] Interação com código de plotagem
 
 Após terminar os recursos essênciais:
-- [ ] Divisão em classes de interface, CNC e istrumento
+- [x] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
-- [ ] Janela expansível
+- [x] Janela expansível
 
 
 Possíveis recursos adicionais:
