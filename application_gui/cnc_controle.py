@@ -91,7 +91,6 @@ class controle_cnc:
                 try:
                     #Seleciona parte da string e sapara estado
                     end = data.index( '|', 1 )
-                    print(data[1:end])
                     return data[1:end]
                 except ValueError:
                     #Caso leitura do comando "?" não retorne estado atual
@@ -99,3 +98,5 @@ class controle_cnc:
         else:
             #Caso não tenha conectador o arduino/grbl
             return
+    def go_home(serial_cnc):
+        pass

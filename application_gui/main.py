@@ -4,6 +4,7 @@ from tkinter.ttk import * # Frame, Label, Entry, Button
 from tkinter import scrolledtext
 from tkinter import filedialog
 from tkinter import font
+from tkinter import messagebox
 #from ttkthemes import ThemedStyle
 
 #Biblioteca do mapa de calor
@@ -21,8 +22,8 @@ from datetime import datetime    #Biblioteca do tempo da maquina
 
 
 #Escrita e Leitura serial com grbl
-#from cnc_controle import controle_cnc
-#from analisador_controle import controle_analisador
+from cnc_controle import controle_cnc
+from analisador_controle import controle_analisador
 
 class main_window(Frame):
     dict_jog = {'up': '$J=G91 Y+% F200',\
@@ -775,17 +776,15 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
-                time.sleep(0.125)
-            
+            time.sleep(3) #colocar delay
+		
         y=y-(self.var_step_y*row)-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
             print("movimento y="+str(y))
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
-                time.sleep(0.125)
+            time.sleep(3) #colocar delay
         
         self.matrix_meas[row][col]=self.leitura_amplitude()
         self.button_matriz[row][col].config(text="\n"+str(self.matrix_meas[row][col])+" dBm\n")

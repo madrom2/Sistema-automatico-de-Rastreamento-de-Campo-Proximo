@@ -41,6 +41,6 @@ class controle_analisador:
         
     #Função leitura da amplitude
     def receiver_amplitude(visa_analisador):
-        return eval(my_instrument.query('RMODe:LEV?').split(',')[1])
+        return eval(visa_analisador.query('RMODe:LEV?').split(',')[1])
         
         
