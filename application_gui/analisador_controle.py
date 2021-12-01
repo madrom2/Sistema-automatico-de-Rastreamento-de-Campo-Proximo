@@ -37,6 +37,10 @@ class controle_analisador:
         
     #Função definição da frequencia em Hz
     def receiver_frequencia(visa_analisador,freq):
+        visa_analisador.write('*RST;*CLS')  # Reset the instrument, clear the Error queue
+        visa_analisador.write('FREQuency:STARt {}'.format(int(freq*0.99)))
+        visa_analisador.write('FREQuency:STOP {}'.format(int(freq*1.01)))
+        visa_analisador.write('SYST:MODE RMOD')
         visa_analisador.write('RMOD:FREQ {}'.format(freq))
         
     #Função leitura da amplitude
