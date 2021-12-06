@@ -31,12 +31,11 @@ Recursos essênciais:
 - [x] Geração e atualização da matriz
 - [x] Definição e comunição da frequência de medição
 - [x] Comando do botão de "Parar Medição"
-- [ ] Comando do botão de "Pausar Medição"
 - [x] Espaço de apresentação de parametros
 - [x] Comando do botão de "Inicia Medição"
 - [x] Movimento dos eixos X Y Z separadamente
 - [x] Recurso para salvar arquivo
-- [ ] Tempo estimado da medição
+- [x] Tempo estimado da medição
 - [x] Barra de progresso da medição
 - [x] Botão e comando para "Home"
 - [x] Escolha de ponto para remedir
@@ -46,8 +45,3 @@ Após terminar os recursos essênciais:
 - [x] Divisão em classes de interface, CNC e istrumento
 - [ ] Organização e comentários no código
 - [x] Janela expansível
-
-
-Possíveis recursos adicionais:
-- Modo noturno
-- Adicionar eixo Z a medição
