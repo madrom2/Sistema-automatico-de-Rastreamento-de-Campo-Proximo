@@ -21,7 +21,6 @@ import csv                       #Biblioteca salvar dados em arquivo csv
 import numpy as np               #Biblioteca de array FUTURO RETIRAR
 from datetime import datetime    #Biblioteca do tempo da maquina
 
-
 #Escrita e Leitura serial com grbl
 from cnc_controle import controle_cnc
 from analisador_controle import controle_analisador
@@ -498,6 +497,10 @@ class main_window(Frame):
         #Constantes e inicializações
         self.lista_serial()
         self.att_matriz()
+        
+        Y, X = np.mgrid[-3:3:100j, -3:3:100j]
+        U = -1 - X**2 + Y
+        V = 1 + X - Y**2
         self.matrix_meas_y = np.full((13, 13), -5)
         self.matrix_meas_x = np.full((13, 13), 5)
 
@@ -527,7 +530,6 @@ class main_window(Frame):
     
     #Função leitura amplitude do analisador
     def leitura_amplitude(self):
-        #futuro ... integração com o novo analisador
         return controle_analisador.receiver_amplitude(self.visa_analisador)
         
     #Função para abrir porta serial da CNC
@@ -1025,25 +1027,24 @@ class main_window(Frame):
             if(self.verifica_numero(self.var_plot_min.get(), 'MAX e MIN do plot')):
                 return
         try:
-            data_x=self.matrix_meas_x
-            data_y=self.matrix_meas_y
+            data_x = self.matrix_meas_x
+            data_y = self.matrix_meas_y
         except:
             #erro no dado atual
             return
         
         if(self.flag_auto_maxmin):
-            vmax=max(max(data))
-            vmin=min(min(data))
+            limites_cor = [np.amax([np.amax(data_x), np.amax(data_y)]), np.amin([np.amin(data_x), np.amin(data_y)])]
         else:
-            vmax=int(self.var_plot_max.get())#função que verifica se é numero
-            vmin=int(self.var_plot_min.get())#função que veririca se é numero
-        step=[self.var_step_x, self.var_step_y]
-        escolhas=[self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
+            vmax = int(self.var_plot_max.get())
+            vmin = int(self.var_plot_min.get())
+        step = [self.var_step_x, self.var_step_y]
+        escolhas = [self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
                   self.cmb_plot_interpolacao.get()]
-        flag=[self.flag_anotacao, self.flag_grade, False]
+        flag = [self.flag_anotacao, self.flag_grade, False]
         destino_save=None
     
-        self.mapa_de_calor(data_x, data_y, vmax, vmin, step, flag, escolhas, destino_save)
+        self.mapa_de_calor(data_x, data_y, limites_cor, step, flag, escolhas, destino_save)
         
     def plot_arquivo_csv(self):
         if not (self.flag_auto_maxmin):
@@ -1060,7 +1061,7 @@ class main_window(Frame):
                                                       title = "Selecione arquivo com extensão CSV",
                                                       filetypes = (("Arquivo Csv","*.csv*"),
                                                                    ("all files","*.*")))
-            data=[]
+            data = []
             with open(data_caminho, 'r') as file:
                 reader = csv.reader(file, delimiter = ';', quoting=csv.QUOTE_NONNUMERIC)
                 for row in reader: # each row is a list
@@ -1072,18 +1073,18 @@ class main_window(Frame):
             return
         
         if(self.flag_auto_maxmin):
-            vmax=max(max(data))
-            vmin=min(min(data))
+            vmax = max(max(data))
+            vmin = min(min(data))
         else:
-            vmax=int(self.var_plot_max.get())#função que verifica se é numero
-            vmin=int(self.var_plot_min.get())#função que veririca se é numero
-        step=[1,1]
-        step[0]=float(self.var_plot_tamanho_x.get())/(len(data[0])-1)
-        step[1]=float(self.var_plot_tamanho_y.get())/(len(data)-1)
+            vmax = int(self.var_plot_max.get())#função que verifica se é numero
+            vmin = int(self.var_plot_min.get())#função que veririca se é numero
+        step = [1,1]
+        step[0] = float(self.var_plot_tamanho_x.get())/(len(data[0])-1)
+        step[1] = float(self.var_plot_tamanho_y.get())/(len(data)-1)
         
-        escolhas=[self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
+        escolhas = [self.cmb_plot_cor.get(), self.var_plot_titulo.get(),
                   self.cmb_plot_interpolacao.get()]
-        flag=[self.flag_anotacao, self.flag_grade, False]
+        flag = [self.flag_anotacao, self.flag_grade, False]
         destino_save=None
         
         self.mapa_de_calor(data, vmax, vmin, step, flag, escolhas, destino_save)
@@ -1091,11 +1092,11 @@ class main_window(Frame):
     def plot_salva(self):
         files = [('Portable Graphics Format(PNG)', '*.png'),
                  ('All Files', '*.*')] 
-        destino= filedialog.asksaveasfilename(filetypes = files, defaultextension = ".png")
+        destino = filedialog.asksaveasfilename(filetypes = files, defaultextension = ".png")
         
         plt.savefig(destino,bbox_inches="tight")
     
-    def mapa_de_calor(self, data_x, data_y, vmax, vmin, step, flag, escolhas, destino_save):
+    def mapa_de_calor(self, data_x, data_y, limites_cor, step, flag, escolhas, destino_save):
         #flag[0] habilitação da anotação
         #flag[1] habilitação da grade
         #flag[2] escolha entre apresentação ou salvar
@@ -1164,12 +1165,15 @@ class main_window(Frame):
         X, Y = np.meshgrid(x, y)
         print(X)
         print(Y)
-          
-        fig = plt.figure(figsize = (7, 7))
-        #fig.colorbar(strm.lines)  
         
-        # Plotting stream plot
-        plt.streamplot(X, Y, data_x, data_y, density = 1)
+        U = -1 - X**2 + Y
+        V = 1 + X - Y**2
+        
+        norm = np.sqrt(U*U + V*V)
+
+        strm = plt.streamplot(X, Y, U, V, color=norm, linewidth=2, cmap=plt.cm.autumn)
+        plt.colorbar(strm.lines)
+ 
         
         #Grade
         if(flag[1]):
