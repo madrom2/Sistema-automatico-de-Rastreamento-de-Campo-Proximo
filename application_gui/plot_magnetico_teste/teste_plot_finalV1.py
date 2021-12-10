@@ -52,7 +52,6 @@ except:
 #plot com quiver
 norm = []
 for j in range(len(x)):
-    print(x[j])
     norm.append(-np.sqrt(pow(int(x[j]),2)+pow(y[j],2)))
     
 quiveropts = dict(color='white', headlength=0, pivot='middle', units='xy', headwidth=1) # common options
