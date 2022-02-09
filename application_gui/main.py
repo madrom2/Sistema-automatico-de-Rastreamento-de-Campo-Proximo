@@ -18,7 +18,8 @@ import serial.tools.list_ports   #Bibliote de conecção serial
 import time                      #Biblioteca para delay
 import csv                       #Biblioteca salvar dados em arquivo csv
 import numpy as np               #Biblioteca de array FUTURO RETIRAR
-from datetime import datetime    #Biblioteca do tempo da maquina
+from datetime import datetime, timedelta    #Biblioteca do tempo da maquina
+import os
 
 
 #Escrita e Leitura serial com grbl
@@ -39,7 +40,7 @@ class main_window(Frame):
     var_step_x, var_step_y = 1, 1 # passo de cada eixo
     flag_medindo, flag_stop = False, False
     flag_grade, flag_anotacao, flag_auto_maxmin= True, True, True
-    tempo_entre_medidas=1 #em segundos
+    max_medido, min_medido = -99, 99
     
     def __init__(self):
         super().__init__()
@@ -254,15 +255,21 @@ class main_window(Frame):
         frm_param.rowconfigure(1, pad=3)
         frm_param.rowconfigure(2, pad=3)
         frm_param.rowconfigure(3, pad=3)
+        frm_param.rowconfigure(4, pad=3)
+        frm_param.rowconfigure(5, pad=3)
         
         lbl_par_1 = Label(frm_param, text='Possição Ponto 1 (cm):')
         lbl_par_2 = Label(frm_param, text='Possição Ponto 2 (cm):')
         lbl_par_3 = Label(frm_param, text='Passo eixo X (cm):')
         lbl_par_4 = Label(frm_param, text='Passo eixo Y (cm):')
+        lbl_par_9 = Label(frm_param, text='Maior valor medido:')
+        lbl_par_10 = Label(frm_param, text='Menor valor medido:')
         self.lbl_par_5 = Label(frm_param, text='00,00 00,00')
         self.lbl_par_6 = Label(frm_param, text='00,00 00,00')
         self.lbl_par_7 = Label(frm_param, text='0,0000')
         self.lbl_par_8 = Label(frm_param, text='0,0000')
+        self.lbl_par_11 = Label(frm_param, text='-99,00')
+        self.lbl_par_12 = Label(frm_param, text='-99,00')
         
         lbl_par_1.grid(row=0, column=0, sticky=W)
         lbl_par_2.grid(row=1, column=0, sticky=W)
@@ -272,14 +279,18 @@ class main_window(Frame):
         self.lbl_par_6.grid(row=1, column=1, sticky=E)
         self.lbl_par_7.grid(row=2, column=1, sticky=E)
         self.lbl_par_8.grid(row=3, column=1, sticky=E)
+        lbl_par_9.grid(row=4, column=0, sticky=W)
+        lbl_par_10.grid(row=5, column=0, sticky=W)
+        self.lbl_par_11.grid(row=4, column=1, sticky=E)
+        self.lbl_par_12.grid(row=5, column=1, sticky=E)
         
         #---nome do frame---------------------
         frm_progress = Labelframe(self.frm_notebook1)
         frm_progress.place(x=460,y=640,width=608,height=45)
         
         #---tempo de progresso----------------
-        lbl_10 = Label(frm_progress, text='Tempo estimado de '+'HH'+' : '+'MM'+' : '+'SS')
-        lbl_10.place(x=10,y=0,width=300,height=20)
+        self.lbl_10 = Label(frm_progress, text='Tempo estimado de '+'HH'+' : '+'MM'+' : '+'SS')
+        self.lbl_10.place(x=10,y=0,width=300,height=20)
         
         #---barra de progresso----------------
         self.var_pb=DoubleVar()
@@ -305,7 +316,7 @@ class main_window(Frame):
         self.str_save = Entry(frm_04, width=41)
         self.str_save.grid(row=0, column=1)
         
-        lbl_12 = Label(frm_04, text=' _dd-mm-yyyy_HH-MM.xlsx ')
+        lbl_12 = Label(frm_04, text=' _dd-mm-yyyy_HH-MM.csv ')
         lbl_12.grid(row=0, column=2)
         
         btn_save = Button(frm_04, text='Salvar')
@@ -353,16 +364,12 @@ class main_window(Frame):
         self.btn_freq_refresh['command'] = self.att_freq
         
         #-Botões de atuação medição
-        btn_stop = Button(self.frm_notebook1, text='Parar Medição')
-        btn_stop.place(x=305,y=300,width=145,height=40)
+        btn_stop = Button(self.frm_notebook1, text='Abortar Medição')
+        btn_stop.place(x=235,y=300,width=216,height=40)
         btn_stop['command'] = self.stop_meas
         
-        self.btn_pause = Button(self.frm_notebook1, text='Pausar Medição')
-        self.btn_pause.place(x=157,y=300,width=145,height=40)
-        self.btn_pause['command'] = self.pause_meas
-        
         btn_start = Button(self.frm_notebook1, text='Iniciar Medição')
-        btn_start.place(x=10,y=300,width=145,height=40)
+        btn_start.place(x=10,y=300,width=217,height=40)
         btn_start['command'] = self.medicao
         
         #-Notebook ed plotagem
@@ -387,12 +394,14 @@ class main_window(Frame):
         self.var_plot_max=Entry(frm_plot_maxmin, width=8)
         self.var_plot_max.insert(END, '%d' % 10)
         self.var_plot_max.place(x=45,y=3,width=57,height=20)
+        self.var_plot_max['state'] = 'disable'
         
         lbl_22 = Label(frm_plot_maxmin, text='MIN. :')
         lbl_22.place(x=110,y=5,width=60,height=20)
         self.var_plot_min=Entry(frm_plot_maxmin, width=8)
         self.var_plot_min.insert(END, '%d' % -80)
         self.var_plot_min.place(x=145,y=3,width=57,height=20)
+        self.var_plot_min['state'] = 'disable'
         
         lbl_ou = Label(frm_plot_parametro, text=' OU')
         lbl_ou.place(x=95,y=47,width=30,height=15)
@@ -441,17 +450,27 @@ class main_window(Frame):
         self.btn_plt_grade['command'] = self.plot_grade
         
         #---Habilitar label
-        frm_plot_grid = Labelframe(frm_plot, text='Anotação eixos')
+        frm_plot_grid = Labelframe(frm_plot, text='Unidade eixos')
         frm_plot_grid.place(x=123,y=281,width=107,height=67)
         
-        self.btn_plt_anotacao = Button(frm_plot_grid, text='   Anotação\nHABILITADO')
+        self.btn_plt_anotacao = Button(frm_plot_grid, text='   Unidade\nHABILITADO')
         self.btn_plt_anotacao.place(x=5,y=1,width=93,height=40)
         self.btn_plt_anotacao['command'] = self.plot_anotacao
         
+        frm_plot_espelhamento = Labelframe(frm_plot, text='Espelhamento dos eixos')
+        frm_plot_espelhamento.place(x=5,y=350,width=225,height=55)
+        
+        self.var_espelhamento_x = IntVar(value = 0)
+        self.chk_espelhamento_x = Checkbutton(frm_plot_espelhamento, text='Eixo X', var=self.var_espelhamento_x) 
+        self.chk_espelhamento_x.place(x=45,y=5,width=70,height=25)
+        
+        self.var_espelhamento_y = IntVar(value = 0)
+        self.chk_espelhamento_y = Checkbutton(frm_plot_espelhamento, text='Eixo Y', var=self.var_espelhamento_y)
+        self.chk_espelhamento_y.place(x=120,y=5,width=70,height=25)
         
         #---Qual dado ser plotado
         frm_plot_dado = Labelframe(frm_plot, text='Dado plot')
-        frm_plot_dado.place(x=5,y=350,width=225,height=200)
+        frm_plot_dado.place(x=5,y=407,width=225,height=200)
         
         #----Botões de escolha de dados
         lbl_23 = Label(frm_plot_dado, text='Escolha qual dos dados :')
@@ -484,11 +503,8 @@ class main_window(Frame):
         self.var_plot_tamanho_y.place(x=159,y=45,width=40,height=20)
         
         btn_plt_salvar = Button(frm_plot, text=' Salvar último\nMapa de Calor')
-        btn_plt_salvar.place(x=5,y=555,width=225,height=40)
+        btn_plt_salvar.place(x=5,y=615,width=225,height=40)
         btn_plt_salvar['command'] = self.plot_salva
-        
-        btn_plt_espelhar = Button(frm_plot, text=' Futuro botão que habilita\n espelhamento em ambos eixos')
-        btn_plt_espelhar.place(x=5,y=600,width=225,height=40)
         
         #--Apresentação do mapa de calor
         self.frm_heatmap = Labelframe(self.frm_notebook2, text='Mapa de calor')
@@ -651,16 +667,6 @@ class main_window(Frame):
             self.flag_stop=True
             self.flag_medindo=False
     
-    #Função de ativação flag de pausa medição
-    def pause_meas(self):
-        if(self.flag_medindo):
-            if not (self.flag_stop):
-                #envia para o arduino parar
-                self.flag_stop=True
-            else :
-                self.btn_pause.config(text=('Continuar'))
-                pass # AQUI ENTRA CONTINUAÇÃO DA MEDIÇÃO
-    
     #Função para atualziar tamanho da matriz
     def att_matriz(self):
         if (self.flag_medindo):
@@ -776,7 +782,9 @@ class main_window(Frame):
             if(x>0):direcao=self.dict_jog['right']
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
-            time.sleep(3) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                print("teste7")
+                time.sleep(0.125)
 		
         y=y-(self.var_step_y*row)-float(xyz[1])
         if not (y==0):#Vai para a coordenada do ponto no eixo y
@@ -784,9 +792,17 @@ class main_window(Frame):
             if(y>0):direcao=self.dict_jog['up']
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
-            time.sleep(3) #colocar delay
+            while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                print("teste6")
+                time.sleep(0.125)
         
         self.matrix_meas[row][col]=self.leitura_amplitude()
+        if(self.matrix_meas[row][col] > self.max_medido):
+            self.max_medido = self.matrix_meas[row][col]
+            self.lbl_par_11['text'] = str(self.max_medido)
+        if(self.matrix_meas[row][col] < self.min_medido):
+            self.min_medido = self.matrix_meas[row][col]
+            self.lbl_par_12['text'] = str(self.min_medido)
         self.button_matriz[row][col].config(text="\n"+str(self.matrix_meas[row][col])+" dBm\n")
         
         self.flag_medindo=False
@@ -828,7 +844,6 @@ class main_window(Frame):
                                    message="Pontos não definidos    ")
             return
         
-        self.meas_time = datetime.now()
         self.flag_medindo=True
         
         self.var_pb.set(1)
@@ -842,6 +857,7 @@ class main_window(Frame):
             elif(x<0):direcao=self.dict_jog['left']
             self.meas_movimento_cnc(direcao, abs(x))
             while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                print("teste1")
                 time.sleep(0.125)
             
         y=y-float(xyz[1])
@@ -851,21 +867,38 @@ class main_window(Frame):
             elif(y<0):direcao=self.dict_jog['down']
             self.meas_movimento_cnc(direcao, abs(y))
             while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                print("teste2")
                 time.sleep(0.125)
         
         self.matrix_meas = [[-80 for _ in range(self.cols)] for _ in range(self.rows)]
         
         var_progressbar=0
+        self.max_medido, self.min_medido = -99, 0
+        
+        self.lbl_par_11['text'] = '-0.00'
+        self.lbl_par_12['text'] = '-0.00'
+        
         self.var_pb.set(var_progressbar)
         step_progressbar=100/((self.rows)*(self.cols))
         
+        self.meas_time = datetime.now()
         flag_ordem=True #false=esquerda pra direita
         for i in range(0, self.rows):#linha
+            if(self.flag_stop):
+                self.flag_stop = False
+                return
             if(flag_ordem):
                 for j in range(0, self.cols):#coluna
                     if(self.flag_stop):
+                        self.flag_stop = False
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
+                    if(self.matrix_meas[i][j] > self.max_medido):
+                        self.max_medido = self.matrix_meas[i][j]
+                        self.lbl_par_11['text'] = str(self.max_medido)
+                    if(self.matrix_meas[i][j] < self.min_medido):
+                        self.min_medido = self.matrix_meas[i][j]
+                        self.lbl_par_12['text'] = str(self.min_medido)
                     self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
@@ -873,14 +906,30 @@ class main_window(Frame):
                     if(j+1<self.cols):
                         self.meas_movimento_cnc(self.dict_jog['right'], self.var_step_x)
                         while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                            print("teste3")
                             time.sleep(0.125)
                         #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
+                        if (i == 0) and (j == 0): #define tempo entre dois pontos
+                            delta_t = datetime.now() - self.meas_time
+                            tempo_total = (self.rows-1)*(self.cols-1)*delta_t
+                            tempo_total = timedelta(seconds=tempo_total.total_seconds())
+                            horas, sobra = divmod(tempo_total.seconds, 3600)
+                            minutos, segundos = divmod(sobra, 60)
+                            self.lbl_10.config(text='Tempo estimado de {:02d} : {:02d}: {:02d}'.format(horas, minutos, segundos))
+
                 flag_ordem=False
             else:
                 for j in reversed(range(0,self.cols)):#coluna
                     if(self.flag_stop):
+                        self.flag_stop = False
                         return
                     self.matrix_meas[i][j]=self.leitura_amplitude()
+                    if(self.matrix_meas[i][j] > self.max_medido):
+                        self.max_medido = self.matrix_meas[i][j]
+                        self.lbl_par_11['text'] = str(self.max_medido)
+                    elif(self.matrix_meas[i][j] < self.min_medido):
+                        self.min_medido = self.matrix_meas[i][j]
+                        self.lbl_par_12['text'] = str(self.min_medido)
                     self.button_matriz[i][j].config(text="\n"+str(self.matrix_meas[i][j])+" dBm\n")
                     var_progressbar=var_progressbar+step_progressbar
                     self.var_pb.set(var_progressbar)
@@ -888,12 +937,14 @@ class main_window(Frame):
                     if(j!=0):
                         self.meas_movimento_cnc(self.dict_jog['left'], self.var_step_x)
                         while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                            print("teste4")
                             time.sleep(0.125)
                         #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
                 flag_ordem=True
             if(i+1<self.rows):
                 self.meas_movimento_cnc(self.dict_jog['down'], self.var_step_y)
                 while(controle_cnc.estado_atual(self.serial_cnc)!='Idle'):
+                    print("teste5")
                     time.sleep(0.125)
                 #time.sleep(self.tempo_entre_medidas) #pra teste da tela atualizando
        
@@ -938,19 +989,27 @@ class main_window(Frame):
     #Função de alteração da flag de plot das anotações nos eixos
     def plot_anotacao(self):     
         if(self.flag_anotacao):
-            self.btn_plt_anotacao.config(text='     Anotação\nDESABILITADO')
+            self.btn_plt_anotacao.config(text='     Unidade\nDESABILITADO')
+            self.var_plot_tamanho_x['state'] = 'disable'
+            self.var_plot_tamanho_y['state'] = 'disable'
             self.flag_anotacao=False
         else:
-            self.btn_plt_anotacao.config(text='   Anotação\nHABILITADO')
+            self.btn_plt_anotacao.config(text='Unidade\nHABILITADO')
+            self.var_plot_tamanho_x['state'] = 'enable'
+            self.var_plot_tamanho_y['state'] = 'enable'
             self.flag_anotacao=True
             
     #Função de alteração da flag de plot das anotações nos eixos
     def plot_auto_maxmin(self):     
         if(self.flag_auto_maxmin):
             self.btn_plt_maxmin.config(text='MAX/MIN automático DESABILITADO')
+            self.var_plot_max['state'] = 'enable'
+            self.var_plot_min['state'] = 'enable'
             self.flag_auto_maxmin=False
         else:
             self.btn_plt_maxmin.config(text='MAX/MIN automático HABILITADO')
+            self.var_plot_max['state'] = 'disable'
+            self.var_plot_min['state'] = 'disable'
             self.flag_auto_maxmin=True
             
     #Função de apresentação do mapa de calor para o dado medida realizada
@@ -967,8 +1026,10 @@ class main_window(Frame):
             return
         
         if(self.flag_auto_maxmin):
-            vmax=max(max(data))
-            vmin=min(min(data))
+            vmax=max(map(max,data))
+            vmin=min(map(min,data))
+            print(vmax)
+            print(vmin)
         else:
             vmax=int(self.var_plot_max.get())#função que verifica se é numero
             vmin=int(self.var_plot_min.get())#função que veririca se é numero
@@ -977,7 +1038,14 @@ class main_window(Frame):
                   self.cmb_plot_interpolacao.get()]
         flag=[self.flag_anotacao, self.flag_grade, False]
         destino_save=None
-    
+        
+        if(self.var_espelhamento_x.get()):#Se espelhamento no eixo X selecionado
+            for aux in data:
+                aux.reverse()
+                
+        if(self.var_espelhamento_y.get()):#Se espelhamento no eixo Y selecionado
+            data.reverse()
+        
         self.mapa_de_calor(data, vmax, vmin, step, flag, escolhas, destino_save)
         
     def plot_arquivo_csv(self):
@@ -1007,8 +1075,10 @@ class main_window(Frame):
             return
         
         if(self.flag_auto_maxmin):
-            vmax=max(max(data))
-            vmin=min(min(data))
+            vmax=max(map(max,data))
+            vmin=min(map(min,data))
+            print(vmax)
+            print(vmin)
         else:
             vmax=int(self.var_plot_max.get())#função que verifica se é numero
             vmin=int(self.var_plot_min.get())#função que veririca se é numero
@@ -1020,6 +1090,13 @@ class main_window(Frame):
                   self.cmb_plot_interpolacao.get()]
         flag=[self.flag_anotacao, self.flag_grade, False]
         destino_save=None
+        
+        if(self.var_espelhamento_x.get()):#Se espelhamento no eixo X selecionado
+            for aux in data:
+                aux.reverse()
+                
+        if(self.var_espelhamento_y.get()):#Se espelhamento no eixo Y selecionado
+            data.reverse()
         
         self.mapa_de_calor(data, vmax, vmin, step, flag, escolhas, destino_save)
     
@@ -1131,10 +1208,10 @@ def main():
     #windll.shcore.SetProcessDpiAwareness(1) #altera dpi do sistema operacional (não funciona)
     #---icone da janela-------------------
     try:
-        icone = PhotoImage(file = 'labcem_icone.png') 
+        icone = PhotoImage(file = os.path.realpath(__file__).replace(os.path.basename(__file__),'')+'labcem_icone.png') 
         root.iconphoto(False, icone)
-    except:
-        pass
+    except Exception as e:
+        print(e)
     #-------------------------------------
     app = main_window()
     root.mainloop()
